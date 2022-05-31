@@ -1,0 +1,10 @@
+fake-useragent==0.1.11
+fastapi
+uvicorn
+requests
+pytest
+flake8
+ipdb
+tweepy
+selenium==3.141.0
+pytz

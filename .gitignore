@@ -1,0 +1,11 @@
+# File containing access keys to Twitter API App
+config.py
+VIPBorderlands.pkl
+*.csv
+*json
+*png
+*.log
+*.xml
+twitter_api_locations.py
+.idea/
+__pycache__/
