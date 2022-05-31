@@ -1,0 +1,10 @@
+version: '3.3'
+
+services:
+
+  borderlands-scraper:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - 8000:80

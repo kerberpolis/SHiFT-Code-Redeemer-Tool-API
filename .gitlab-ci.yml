@@ -1,19 +1,37 @@
+variables:
+  APP_CONTAINER: "$CI_REGISTRY_IMAGE/borderlands-scraper:$CI_COMMIT_REF_SLUG"
+  BUILD_CACHE: "$CI_REGISTRY_IMAGE/borderlands-scraper:build_cache"
+  PROD_ENVIRONMENT_URL: ""
+
+
+# Build stage also runs tests on container and pushes to GitLab repository
 stages:
-    - build
-    - test
+  - build
+  - deploy
+
+services:
+  - docker:18.09.7-dind
 
 build:
-    stage: build
-    script:
-        - echo "Building"
-        - mkdir build
-        - touch build/info.txt
-    artifacts:
-        paths:
-            - build/
+  image: docker:18.09.7
+  stage: build
+  script:
+    # Use previously built container as cache to speed up build.
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker pull "$BUILD_CACHE" || true
+    - >
+      docker build
+      --cache-from "$BUILD_CACHE"
+      -t "$APP_CONTAINER" .
 
-test:
-    stage: test
-    script:
-        - echo "Testing"
-        - test -f "build/info.txt"
+    # Tag APP_CONTAINER as new build cache and then push to repo
+    - docker tag "$APP_CONTAINER" "$BUILD_CACHE"
+    - docker push "$BUILD_CACHE"
+
+    # Run container tests
+    - docker run --rm "$APP_CONTAINER" pytest -vs tests
+    - docker run --rm "$APP_CONTAINER" flake8
+
+    # Push container to gitlab registry
+    - docker push "$APP_CONTAINER"
+  allow_failure: false
