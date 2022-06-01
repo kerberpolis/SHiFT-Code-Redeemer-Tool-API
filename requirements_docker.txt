@@ -1,3 +1,11 @@
 requests
 pytest
 flake8
+bcrypt
+fake-useragent==0.1.11
+fastapi
+uvicorn
+tweepy
+selenium==3.141.0
+pytz
+bcrypt

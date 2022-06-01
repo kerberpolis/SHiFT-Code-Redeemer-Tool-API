@@ -1,6 +1,8 @@
 import sqlite3
 from sqlite3 import Error
 import logging
+from app.config import GEARBOX_EMAIL, GEARBOX_PASSWORD
+import bcrypt
 
 
 def create_connection(db_file):
@@ -14,17 +16,48 @@ def create_connection(db_file):
     return conn
 
 
-def create_table(conn, create_table_sql):
+def create_user_table(conn):
+    sql = """CREATE TABLE IF NOT EXISTS users(
+                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                gearbox_email TEXT NOT NULL UNIQUE,
+                gearbox_password TEXT NOT NULL UNIQUE,
+                salt TEXT NOT NULL
+            )"""
+
+    create_table(conn, sql)
+
+
+def create_code_table(conn):
+    sql = """CREATE TABLE IF NOT EXISTS codes(
+                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                game TEXT,
+                platform TEXT,
+                code TEXT NOT NULL,
+                type TEXT NOT NULL,
+                reward TEXT DEFAULT Unknown,
+                time_gathered TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                expires TEXT,
+                attempts INT NOT NULL DEFAULT 0,
+                valid INT NOT NULL DEFAULT 0,
+                UNIQUE(game, code, type)
+                UNIQUE(code, type)
+            )"""
+
+    create_table(conn, sql)
+
+
+def create_table(conn, sql):
     """ create a table from the create_table_sql statement
     :param conn: Connection object
-    :param create_table_sql: a CREATE TABLE statement
+    :param sql: a CREATE TABLE statement
     :return:
     """
     try:
         c = conn.cursor()
-        c.execute(create_table_sql)
+        c.execute(sql)
     except Error as e:
         print(e)
+        logging.debug(e)
 
 
 def create_code(conn, code_data):
@@ -42,7 +75,7 @@ def create_code(conn, code_data):
         with conn:
             cur.execute(sql, code_data)
         conn.commit()
-        print(f'Creating {code_data[0]} code {code_data[2]} in database table_codes')
+        print(f'Creating {code_data[0]} code {code_data[2]} in database table codes')
     except sqlite3.IntegrityError as e:
         # print(f'Code data {code_data} already exists. Error: {str(e)}')  # cannot add due to unique constraints
         pass
@@ -188,3 +221,50 @@ def get_attempts(conn, id):
     attempts = cur.fetchone()
 
     return attempts[0]
+
+
+def create_user(conn, user_data):
+    sql = '''INSERT INTO users(gearbox_email, gearbox_password, salt)
+                 VALUES(:gearbox_email, :gearbox_password, :salt)'''
+    cur = conn.cursor()
+
+    try:
+        with conn:
+            cur.execute(sql, user_data)
+        conn.commit()
+        print(f'Creating User {user_data[0]} in database table users')
+    except sqlite3.IntegrityError as e:
+        print(f'User could not be created due to Integrity issue. Error: {str(e)}')
+    except sqlite3.DatabaseError as e:
+        print(f'Database Error: {str(e)}')
+        conn.rollback()
+    except Exception as e:
+        print(f'Error: {str(e)}')
+        conn.rollback()
+
+    return cur.lastrowid
+
+
+def select_all_users(conn):
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users")
+    return cur.fetchall()
+
+
+def select_user_by_gearbox_email(conn, gearbox_email):
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE gearbox_email=?", (gearbox_email, ))
+    return cur.fetchone()
+
+
+def select_user_by_id(conn, user_id):
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE _id=?", (user_id, ))
+    return cur.fetchone()
+
+
+def remove_user_by_id(conn, user_id):
+    cur = conn.cursor()
+    cur.execute("DELETE FROM users WHERE _id=?", (user_id, ))
+    conn.commit()
+    cur.close()
