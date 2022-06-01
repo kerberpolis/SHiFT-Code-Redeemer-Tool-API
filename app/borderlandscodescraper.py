@@ -14,7 +14,6 @@ import app.borderlands_crawler as dtc
 from app import config, database_controller
 from app.borderlands_crawler import CodeFailedException, GameNotFoundException, \
     ConsoleOptionNotFoundException, GearBoxError
-from database_controller import create_code
 
 database = "borderlands_codes.db"
 conn = database_controller.create_connection(database)
@@ -127,7 +126,6 @@ def get_date(str_date):
             pass
 
     print("Date not in expected format")
-
     return "Unknown"
 
 
@@ -222,8 +220,7 @@ def json_archive(conn):
                 'time_gathered': code['archived'],
                 'expires': code['expires']
             }
-
-            create_code(conn, code_data)
+            database_controller.create_code(conn, code_data)
 
         time.sleep(900)
 
@@ -244,30 +241,20 @@ def setup_logger():
     logger.addHandler(smtp_handler)
 
 
-if __name__ == "__main__":
-    setup_logger()
-
-    sql_create_codes_table = """CREATE TABLE IF NOT EXISTS codes(
-            _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-            game TEXT,
-            platform TEXT,
-            code TEXT NOT NULL,
-            type TEXT NOT NULL,
-            reward TEXT DEFAULT Unknown,
-            time_gathered TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            expires TEXT,
-            attempts INT NOT NULL DEFAULT 0,
-            valid INT NOT NULL DEFAULT 0,
-            UNIQUE(game, code, type)
-            UNIQUE(code, type))"""
-
-    # create tables
+def setup_tables():
+    """
+    Create tables in sqlite database
+    """
     if conn is not None:
-        # conn.set_autocommit(True)
-        # create codes table
-        database_controller.create_table(conn, sql_create_codes_table)
+        database_controller.create_code_table(conn)
+        database_controller.create_user_table(conn)
     else:
         print("Error! cannot create the database connection.")
+
+
+if __name__ == "__main__":
+    setup_logger()
+    setup_tables()
 
     thread_list = []
     t1 = threading.Thread(target=twitter_stream, name='twitter_streamer', args=(conn,))
@@ -277,6 +264,6 @@ if __name__ == "__main__":
     t3 = threading.Thread(target=input_borderlands_codes, name="borderlands_input", args=(conn,))
     thread_list.append(t3)
 
-    for t in thread_list:
-        t.start()
-        print(f'{t.name} has started')
+    # for t in thread_list:
+    #     t.start()
+    #     print(f'{t.name} has started')
