@@ -1,8 +1,6 @@
 import sqlite3
 from sqlite3 import Error
 import logging
-from app.config import GEARBOX_EMAIL, GEARBOX_PASSWORD
-import bcrypt
 
 
 def create_connection(db_file):
@@ -232,7 +230,7 @@ def create_user(conn, user_data):
         with conn:
             cur.execute(sql, user_data)
         conn.commit()
-        print(f'Creating User {user_data[0]} in database table users')
+        print(f'Creating User {user_data["gearbox_email"]} in database table users')
     except sqlite3.IntegrityError as e:
         print(f'User could not be created due to Integrity issue. Error: {str(e)}')
     except sqlite3.DatabaseError as e:
@@ -268,3 +266,29 @@ def remove_user_by_id(conn, user_id):
     cur.execute("DELETE FROM users WHERE _id=?", (user_id, ))
     conn.commit()
     cur.close()
+
+
+# if __name__ == "__main__":
+#     database = "borderlands_codes.db"
+#     conn = create_connection(database)
+#
+#     if GEARBOX_EMAIL and GEARBOX_PASSWORD:
+#         byte_pass = GEARBOX_PASSWORD.encode('utf-8')
+#         # Generate salt
+#         salt = bcrypt.gensalt()
+#         # Hash password
+#         gearbox_password_hashed = bcrypt.hashpw(byte_pass, salt)
+#
+#         print(GEARBOX_EMAIL)
+#         print(GEARBOX_PASSWORD)
+#         print(bcrypt.checkpw(byte_pass, gearbox_password_hashed))
+#
+#         my_data = {
+#             'gearbox_email': GEARBOX_EMAIL,
+#             'gearbox_password': gearbox_password_hashed,
+#             'salt': salt
+#         }
+#         rowid = create_user(conn, my_data)
+#         print(rowid)
+#         user = select_user_by_gearbox_email(conn, GEARBOX_EMAIL)
+#         print(user)

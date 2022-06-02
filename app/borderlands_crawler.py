@@ -10,18 +10,20 @@ from app import config
 
 
 class BorderlandsCrawler(object):
+    user = None
     name = "borderlands_spider"
     start_url = 'https://google.com'
     allowed_domains = ['www.borderlands.com']
     GEARBOX_URL = 'https://shift.gearboxsoftware.com/home'
     BORDERLANDS_REWARDS_URL = 'https://shift.gearboxsoftware.com/rewards'
 
-    def __init__(self):
+    def __init__(self, user):
+        self.user = user
         self.options = FirefoxOptions()
         # self.options.add_argument('-headless')
 
-        binary = FirefoxBinary('/usr/bin/firefox') # for laptop
-        # binary = FirefoxBinary('/usr/bin/firefox-esr') # for pi
+        binary = FirefoxBinary('/usr/bin/firefox')  # for laptop
+        # binary = FirefoxBinary('/usr/bin/firefox-esr')  # for pi
         # self.options.add_argument('--proxy-server=%s' % PROXY)
 
         try:
@@ -71,8 +73,15 @@ class BorderlandsCrawler(object):
 
         time.sleep(1)
         try:
-            self.input("user_email", config.GEARBOX_EMAIL)
-            self.input("user_password", config.GEARBOX_PASSWORD)
+            if not self.user:
+                user_email = config.GEARBOX_EMAIL
+                user_password = config.GEARBOX_PASSWORD
+            else:
+                user_email = self.user[1]
+                user_password = self.user[2]
+
+            self.input("user_email", user_email)
+            self.input("user_password", user_password)
             self.click('/html/body/div[1]/div[2]/div[2]/div[1]/div/div[1]/form/div[7]/input')
         except InvalidSelectorException as exc:
             logging.debug(exc)
