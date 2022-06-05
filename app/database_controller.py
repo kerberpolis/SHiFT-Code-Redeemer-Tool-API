@@ -260,6 +260,35 @@ def remove_user_by_id(conn: Connection, user_id: int):
     cur.close()
 
 
+def create_user_code(conn: Connection, user_id: int, code_id: int):
+    """
+    A user has used a particular code successfully. Create a row in user_code table
+    to record this.
+
+    :param user_id: id of the user using the code
+    :param code_id: id of the code
+    :return: the id of the last row created
+    """
+    sql = '''INSERT INTO user(user_id, code_id)
+                     VALUES(:user_id, :code_id)'''
+    cur = conn.cursor()
+
+    try:
+        with conn:
+            cur.execute(sql, (user_id, code_id,))
+        conn.commit()
+    except sqlite3.IntegrityError as e:
+        print(f'User {user_id} has already used code {code_id}. Error: {str(e)}')
+    except sqlite3.DatabaseError as e:
+        print(f'Database Error: {str(e)}')
+        conn.rollback()
+    except Exception as e:
+        print(f'Error: {str(e)}')
+        conn.rollback()
+
+    return cur.lastrowid
+
+
 def encrypt(data: bytes, key: bytes) -> bytes:
     return Fernet(key).encrypt(data)
 

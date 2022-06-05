@@ -32,6 +32,12 @@ def input_borderlands_codes(conn: Connection, user: tuple, codes: list):
                     logging.info(f'Redeemed {code_type} code {code}')
                     # update expired attribute in codes table
                     database_controller.update_invalid_code(conn, row[0])
+
+                    # add row to user_code table showing user_id has used a code
+                    user_id, code_id = user[0], row[0]
+                    user_code_id = database_controller.create_user_code(conn, user_id, code_id)
+                    if user_code_id:
+                        print(f'User {user_id} has used code {code_id}')
             except GearBoxError:
                 logging.info(f'There was an error with gearbox when redeeming code {row[0]}, {code}')
             except ConsoleOptionNotFoundException as e:
