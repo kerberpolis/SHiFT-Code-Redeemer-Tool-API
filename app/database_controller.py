@@ -48,6 +48,19 @@ def create_code_table(conn: Connection):
     create_table(conn, sql)
 
 
+def create_user_code_table(conn: Connection):
+    sql = """CREATE TABLE IF NOT EXISTS user_code(
+                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                code_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                UNIQUE(user_id, code_id),
+                FOREIGN KEY (code_id) REFERENCES codes (_id),
+                FOREIGN KEY (user_id) REFERENCES users (_id)
+            )"""
+
+    create_table(conn, sql)
+
+
 def create_table(conn: Connection, sql: str):
     """ create a table from the create_table_sql statement
     :param conn: Connection object

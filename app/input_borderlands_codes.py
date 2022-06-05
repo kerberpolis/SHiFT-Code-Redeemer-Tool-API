@@ -76,6 +76,7 @@ def setup_tables(conn: Connection):
     if conn is not None:
         database_controller.create_code_table(conn)
         database_controller.create_user_table(conn)
+        database_controller.create_user_code_table(conn)
     else:
         print("Error! cannot create the database connection.")
 
