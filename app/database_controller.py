@@ -7,6 +7,8 @@ from cryptography.fernet import Fernet
 
 from app.config import GEARBOX_EMAIL, GEARBOX_PASSWORD
 
+KEY = os.getenv('BORDERLANDS_USER_CRYPTOGRAPHY_KEY')
+
 
 def create_connection(db_file):
     """ create a database connection to a SQLite database """
@@ -269,7 +271,7 @@ def create_user_code(conn: Connection, user_id: int, code_id: int):
     :param code_id: id of the code
     :return: the id of the last row created
     """
-    sql = '''INSERT INTO user(user_id, code_id)
+    sql = '''INSERT INTO user_code(user_id, code_id)
                      VALUES(:user_id, :code_id)'''
     cur = conn.cursor()
 
@@ -287,6 +289,19 @@ def create_user_code(conn: Connection, user_id: int, code_id: int):
         conn.rollback()
 
     return cur.lastrowid
+
+
+def get_user_codes_by_id(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM user_code WHERE user_id=?', (user_id, ))
+    return cur.fetchall()
+
+
+def get_valid_user_codes(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM code WHERE _id NOT IN ('
+                'SELECT code_id FROM user_code WHERE user_id=?)', (user_id,))
+    return cur.fetchall()
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:
