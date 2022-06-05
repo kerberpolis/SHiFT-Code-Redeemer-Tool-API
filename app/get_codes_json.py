@@ -1,3 +1,5 @@
+from sqlite3 import Connection
+
 import requests
 
 from app import database_controller
@@ -6,7 +8,7 @@ database = "borderlands_codes.db"
 conn = database_controller.create_connection(database)
 
 
-def json_archive(conn):
+def json_archive(conn: Connection):
     url = 'https://shift.orcicorn.com/shift-code/index.json'
 
     # creating HTTP response object from given url

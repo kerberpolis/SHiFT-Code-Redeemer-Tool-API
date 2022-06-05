@@ -28,12 +28,10 @@ def seed_users_table(sqlite_connection):
         {
             'gearbox_email': 'test_email_1',
             'gearbox_password': 'test_password_1',
-            'salt': 'salt_1'
         },
         {
             'gearbox_email': 'test_email_2',
             'gearbox_password': 'test_password_2',
-            'salt': 'salt_2'
         }
 
     ]

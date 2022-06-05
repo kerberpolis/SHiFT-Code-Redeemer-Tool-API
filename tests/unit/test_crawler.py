@@ -3,7 +3,7 @@ import threading
 import pytest
 
 from app.database_controller import create_user
-from app.input_borderlands_codes import start_threads
+from app.input_borderlands_codes import start_crawlers
 
 
 # @pytest.mark.parametrize("users_data, expected_threads",
@@ -24,7 +24,7 @@ from app.input_borderlands_codes import start_threads
 #         create_user(sqlite_connection, user_data)
 #
 #     # act
-#     start_threads(sqlite_connection)
+#     start_crawlers(sqlite_connection)
 #
 #     # assert
 #     assert threading.active_count() == expected_threads

@@ -1,7 +1,7 @@
 import logging
 import logging.handlers
 import threading
-import time
+from sqlite3 import Connection
 
 import app.borderlands_crawler as dtc
 from app import config, database_controller
@@ -12,7 +12,7 @@ database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
 
 
-def input_borderlands_codes(conn, user, codes):
+def input_borderlands_codes(conn: Connection, user: tuple, codes: list):
     logged_in_borderlands = False
     crawler = dtc.BorderlandsCrawler(user)
 
@@ -69,7 +69,7 @@ def setup_logger():
     logger.addHandler(smtp_handler)
 
 
-def setup_tables(conn):
+def setup_tables(conn: Connection):
     """
     Create tables in sqlite database
     """
@@ -80,7 +80,7 @@ def setup_tables(conn):
         print("Error! cannot create the database connection.")
 
 
-def start_crawlers(conn):
+def start_crawlers(conn: Connection):
     valid_codes = database_controller.select_valid_codes(conn)
 
     if valid_codes:
