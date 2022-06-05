@@ -8,4 +8,5 @@ uvicorn
 tweepy
 selenium==3.141.0
 pytz
-bcrypt
+cryptography
+tweepy
