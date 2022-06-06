@@ -91,9 +91,10 @@ def create_code(conn: Connection, code_data: dict):
         with conn:
             cur.execute(sql, code_data)
         conn.commit()
-        logging.info(f'Creating {code_data["game"]} code {code_data["code"]} in database table code')
+        print(f'Creating {code_data["game"]} code {code_data["code"]} in database table code')
     except sqlite3.IntegrityError as e:
-        # logging.debug(f'Code data {code_data} already exists. Error: {str(e)}')  # cannot add due to unique constraints
+        # cannot add due to unique constraint
+        print(f'{code_data["type"]} code {code_data["code"]} already exists. Error: {str(e)}')
         pass
     except sqlite3.DatabaseError as e:
         logging.debug(f'Database Error: {str(e)}')
@@ -226,7 +227,7 @@ def create_user(conn: Connection, user_data: dict):
         conn.commit()
         print(f'Creating User {user_data["gearbox_email"]} in database table user')
     except sqlite3.IntegrityError as e:
-        print(f'User could not be created due to Integrity issue. Error: {str(e)}')
+        print(f'User {user_data["gearbox_email"]} could not be created due to Integrity issue. Error: {str(e)}')
     except sqlite3.DatabaseError as e:
         print(f'Database Error: {str(e)}')
         conn.rollback()

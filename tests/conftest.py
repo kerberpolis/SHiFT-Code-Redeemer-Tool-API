@@ -9,21 +9,23 @@ def sqlite_connection():
     conn = database_controller.create_connection(database)
     database_controller.create_code_table(conn)
     database_controller.create_user_table(conn)
+    database_controller.create_user_code_table(conn)
+    seed_tables(conn)
     yield conn
+    teardown(conn)
     conn.close()
 
 
-@pytest.fixture()
-def remove_users(sqlite_connection):
-    yield
+def teardown(sqlite_connection):
     cur = sqlite_connection.cursor()
-    cur.execute("DELETE FROM users")
+    cur.execute("DELETE FROM user")
+    cur.execute("DELETE FROM code")
+    cur.execute("DELETE FROM user_code")
     sqlite_connection.commit()
     cur.close()
 
 
-@pytest.fixture()
-def seed_users_table(sqlite_connection):
+def seed_tables(sqlite_connection):
     users = [
         {
             'gearbox_email': 'test_email_1',
@@ -32,11 +34,42 @@ def seed_users_table(sqlite_connection):
         {
             'gearbox_email': 'test_email_2',
             'gearbox_password': 'test_password_2',
+        },
+        {
+            'gearbox_email': 'test_email_3',
+            'gearbox_password': 'test_password_3',
         }
-
     ]
-
     for user in users:
         database_controller.create_user(sqlite_connection, user)
 
-    yield
+    codes = [
+        {
+            'game': 'Borderlands 3', 'platform': 'Universal', 'code': '3BRTJ-5K659-K5355-BTB3T-633F3',
+            'type': 'shift', 'reward': '1 GOLD KEY', 'time_gathered': 'Unknown',
+            'expires': 'Unknown'
+        },
+        {
+            'game': 'Borderlands 3', 'platform': 'Universal', 'code': 'KSWJJ-J6TTJ-FRCF9-X333J-5Z6KJ',
+            'type': 'shift', 'reward': '3 GOLD KEY', 'time_gathered': 'Unknown',
+            'expires': 'Unknown'
+        },
+        {
+            'game': 'WONDERLANDS', 'platform': 'Universal', 'code': 'TBRJJ-TW659-W5B5C-T3B3J-3BTBK',
+            'type': 'shift', 'reward': '10 SKELETON KEYS', 'time_gathered': 'Unknown',
+            'expires': 'Unknown'
+        },
+        {
+            'game': 'WONDERLANDS', 'platform': 'Universal', 'code': 'KSK33-S5T33-XX5FS-R3BTB-WSXRC',
+            'type': 'shift', 'reward': '1 SKELETON KEYS', 'time_gathered': 'Unknown',
+            'expires': 'Unknown'
+        },
+        {
+            'game': 'Borderlands 3', 'platform': 'Universal', 'code': 'W9CJT-5XJTB-RRKRS-FTJ3T-BTRKK',
+            'type': 'shift', 'reward': 'Trinket or something', 'time_gathered': 'Unknown',
+            'expires': 'Unknown'
+        }
+    ]
+    for code in codes:
+        database_controller.create_code(sqlite_connection, code)
+
