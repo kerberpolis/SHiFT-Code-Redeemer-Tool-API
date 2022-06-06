@@ -9,5 +9,3 @@ COPY ./app /app/app
 COPY ./tests /app/tests
 
 COPY .flake8 /app/.flake8
-
-RUN python app/borderlandscodescraper.py

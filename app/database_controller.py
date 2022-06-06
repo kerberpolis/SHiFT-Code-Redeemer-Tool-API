@@ -339,4 +339,3 @@ if __name__ == "__main__":
     print(user)
     msg = decrypt(user[2], key.encode())
     print(msg.decode())
-

@@ -46,4 +46,3 @@ def test_create_user_with_same_gearbox_email(sqlite_connection, capsys):
     captured = capsys.readouterr()
     assert f"User {user_data['gearbox_email']} could not be created due to Integrity issue." \
            " Error: UNIQUE constraint failed: user.gearbox_password" in captured.out
-

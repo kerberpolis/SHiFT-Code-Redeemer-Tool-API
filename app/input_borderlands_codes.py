@@ -103,5 +103,3 @@ if __name__ == "__main__":
     setup_logger()
     setup_tables(db_conn)
     start_crawlers(db_conn)
-
-

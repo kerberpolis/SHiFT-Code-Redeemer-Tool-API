@@ -53,7 +53,7 @@ class BorderlandsCrawler(object):
             next_url.click()
             return True
         except NoSuchElementException as e:
-            # logging.error(e, exc_info=True)
+            logging.error(e, exc_info=True)
             return False
         except Exception as e:
             # Just print(e) is cleaner and more likely what you want,

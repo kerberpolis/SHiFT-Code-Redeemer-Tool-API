@@ -72,4 +72,3 @@ def seed_tables(sqlite_connection):
     ]
     for code in codes:
         database_controller.create_code(sqlite_connection, code)
-
