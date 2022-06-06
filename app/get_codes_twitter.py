@@ -2,10 +2,12 @@ import logging
 import logging.handlers
 import re
 from datetime import datetime
+from sqlite3 import Connection
 
 import pytz
 import tweepy
 from tweepy import OAuthHandler
+from tweepy.models import Status
 
 from app import config
 from app import database_controller
@@ -14,7 +16,7 @@ database = "borderlands_codes.db"
 conn = database_controller.create_connection(database)
 
 
-def twitter_stream(conn):
+def get_shift_tweets(conn: Connection):
     auth = OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_TOKEN_SECRET)
 
@@ -39,12 +41,19 @@ def twitter_stream(conn):
             else:
                 platform = "Xbox"
 
-            database_controller.create_code(conn, (game, platform, code,
-                                            code_type, reward, datetime.now(),
-                                            expires))
+            code_data = {
+                'game': game,
+                'platform': platform,
+                'code': code,
+                'type': code_type,
+                'reward': reward,
+                'time_gathered': datetime.now(),
+                'expires': expires
+            }
+            database_controller.create_code(conn, code_data)
 
 
-def get_reward(text):
+def get_reward(text: str) -> str:
     regexp = re.compile(r'Reward: (.*?(?=\n{1,}))')
     reward_match = re.search(regexp, text)
     if reward_match:
@@ -53,7 +62,7 @@ def get_reward(text):
     return "Unknown"
 
 
-def get_game(text):
+def get_game(text: str) -> str:
     game_regexp = re.compile(r'Game: (WONDERLANDS|BORDERLANDS:?\s([2-3]|[A-Z]+-[A-Z]+))')
     game_match = re.search(game_regexp, text)
     if game_match:
@@ -62,7 +71,7 @@ def get_game(text):
     return "Unknown"
 
 
-def get_code(text):
+def get_code(text: str) -> (str, str):
     shift_regexp = re.compile(r'[Xbox:\s]?(([A-Z\d]{5}-){4}[A-Z\d]{5})')
     shift_match = re.search(shift_regexp, text)
     if shift_match:
@@ -72,7 +81,7 @@ def get_code(text):
 
 
 #  todo: parse datetime expiration date in tweet. expiration is not always present. Most seem to be in UTC so far.
-def get_date(str_date):
+def get_date(str_date: str) -> str:
     tzone_dic = {
         'PST': '-0800',
         'PDT': '-0700',
@@ -117,7 +126,7 @@ def get_date(str_date):
     return "Unknown"
 
 
-def get_expiration(text):
+def get_expiration(text: str) -> str:
     regexp = re.compile(r'Expires: (.*?(?=\n{1,}))')
     expiry_match = re.search(regexp, text)
     try:
@@ -129,8 +138,7 @@ def get_expiration(text):
     return "Unknown"
 
 
-#  todo: text contains \n\n, messes w regex.
-def parse_tweet(tweet):
+def parse_tweet(tweet: Status):
     text = tweet.full_text
     game = get_game(text)
     code_type, code = get_code(text)
@@ -141,4 +149,4 @@ def parse_tweet(tweet):
 
 
 if __name__ == "__main__":
-    twitter_stream(conn)
+    get_shift_tweets(conn)

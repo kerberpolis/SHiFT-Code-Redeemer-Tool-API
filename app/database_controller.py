@@ -1,6 +1,13 @@
-import sqlite3
-from sqlite3 import Error
 import logging
+import os
+import sqlite3
+from sqlite3 import Error, Connection
+
+from cryptography.fernet import Fernet
+
+from app.config import GEARBOX_EMAIL, GEARBOX_PASSWORD
+
+KEY = os.getenv('BORDERLANDS_USER_CRYPTOGRAPHY_KEY')
 
 
 def create_connection(db_file):
@@ -14,19 +21,18 @@ def create_connection(db_file):
     return conn
 
 
-def create_user_table(conn):
-    sql = """CREATE TABLE IF NOT EXISTS users(
+def create_user_table(conn: Connection):
+    sql = """CREATE TABLE IF NOT EXISTS user(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 gearbox_email TEXT NOT NULL UNIQUE,
-                gearbox_password TEXT NOT NULL UNIQUE,
-                salt TEXT NOT NULL
+                gearbox_password TEXT NOT NULL UNIQUE
             )"""
 
     create_table(conn, sql)
 
 
-def create_code_table(conn):
-    sql = """CREATE TABLE IF NOT EXISTS codes(
+def create_code_table(conn: Connection):
+    sql = """CREATE TABLE IF NOT EXISTS code(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 game TEXT,
                 platform TEXT,
@@ -44,7 +50,20 @@ def create_code_table(conn):
     create_table(conn, sql)
 
 
-def create_table(conn, sql):
+def create_user_code_table(conn: Connection):
+    sql = """CREATE TABLE IF NOT EXISTS user_code(
+                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                code_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                UNIQUE(user_id, code_id),
+                FOREIGN KEY (code_id) REFERENCES code (_id),
+                FOREIGN KEY (user_id) REFERENCES user (_id)
+            )"""
+
+    create_table(conn, sql)
+
+
+def create_table(conn: Connection, sql: str):
     """ create a table from the create_table_sql statement
     :param conn: Connection object
     :param sql: a CREATE TABLE statement
@@ -58,14 +77,13 @@ def create_table(conn, sql):
         logging.debug(e)
 
 
-def create_code(conn, code_data):
+def create_code(conn: Connection, code_data: dict):
     """
-    Create a new project into the codes table
-    :param code_data:
+    Create a new code into the code table.
     """
     cur = None
 
-    sql = '''INSERT INTO codes(game, platform, code, type, reward, time_gathered, expires)
+    sql = '''INSERT INTO code(game, platform, code, type, reward, time_gathered, expires)
              VALUES(:game, :platform, :code, :type, :reward, :time_gathered, :expires)'''
     cur = conn.cursor()
 
@@ -73,96 +91,91 @@ def create_code(conn, code_data):
         with conn:
             cur.execute(sql, code_data)
         conn.commit()
-        print(f'Creating {code_data[0]} code {code_data[2]} in database table codes')
+        print(f'Creating {code_data["game"]} code {code_data["code"]} in database table code')
     except sqlite3.IntegrityError as e:
-        # print(f'Code data {code_data} already exists. Error: {str(e)}')  # cannot add due to unique constraints
+        # cannot add due to unique constraint
+        print(f'{code_data["type"]} code {code_data["code"]} already exists. Error: {str(e)}')
         pass
     except sqlite3.DatabaseError as e:
-        print(f'Database Error: {str(e)}')
+        logging.debug(f'Database Error: {str(e)}')
         conn.rollback()
     except Exception as e:
-        print(f'Error: {str(e)}')
+        logging.debug(f'Error: {str(e)}')
         conn.rollback()
 
     return cur.lastrowid
 
 
-def update_invalid_code(conn, id):
+def update_invalid_code(conn: Connection, code_id: int):
     """
     update the validity of the code
-    :param id: id of the code
     """
-    sql = '''UPDATE codes
+    sql = '''UPDATE code
              SET valid = 1
              WHERE _id = ?'''
 
     cur = conn.cursor()
     with conn:
-        cur.execute(sql, (id, ))
+        cur.execute(sql, (code_id, ))
     cur.close()
 
 
-def update_valid_code(conn, id):
+def update_valid_code(conn: Connection, code_id: int):
     """
     update the validity of the code
-    :param id: id of the code
     """
-    sql = '''UPDATE codes
+    sql = '''UPDATE code
              SET valid = 0
              WHERE _id = ?'''
 
     cur = conn.cursor()
     with conn:
-        cur.execute(sql, (id, ))
+        cur.execute(sql, (code_id, ))
     cur.close()
-    logging.info(f'Code {id} has been set to invalid')
+    logging.info(f'Code {code_id} has been set to invalid')
 
 
-def delete_code(conn, id):
+def delete_code(conn: Connection, code_id: int):
     """
     Delete a code by code id
-    :param id: id of the code
-    :return:
     """
-    sql = 'DELETE FROM codes WHERE _id=?'
+    sql = 'DELETE FROM code WHERE _id=?'
     cur = conn.cursor()
     with conn:
-        cur.execute(sql, (id,))
+        cur.execute(sql, (code_id,))
     cur.close()
 
 
-def delete_all_codes(conn):
+def delete_all_codes(conn: Connection):
     """
     Delete all rows in the codes table
     """
-    sql = 'DELETE FROM codes'
+    sql = 'DELETE FROM code'
     cur = conn.cursor()
     with conn:
-        cur.execute(sql, (id,))
+        cur.execute(sql)
     cur.close()
 
 
-def select_all_codes(conn):
+def select_all_codes(conn: Connection):
     """
     Query all rows in the codes table
-    :return:
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT * FROM codes")
+        cur.execute("SELECT * FROM code")
     rows = cur.fetchall()
 
     return rows
 
 
-def select_valid_codes(conn):
+def select_valid_codes(conn: Connection):
     """
     Query codes by validity
-    :return:
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT * FROM codes WHERE valid=0")
+        cur.execute("SELECT * FROM code WHERE valid=0")
     rows = cur.fetchall()
 
     cur.close()
@@ -170,69 +183,51 @@ def select_valid_codes(conn):
     return rows
 
 
-def select_codes_by_type(conn, type):
-    """
-    Query codes by type
-    :param type: the type of code
-    :return:
-    """
+def select_code_by_id(conn: Connection, code_id: int):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM codes WHERE type=?", (type, ))
+    cur.execute("SELECT * FROM code WHERE _id=?", (code_id, ))
     rows = cur.fetchall()
 
     return rows
 
 
-def select_codes_by_id(conn, id):
-    """
-    Query codes by type
-    :param type: the type of code
-    :return:
-    """
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM codes WHERE _id=?", (id, ))
-    rows = cur.fetchall()
-
-    return rows
-
-
-def increment_attempts(conn, id):
+def increment_attempts(conn: Connection, code_id: int):
     """
     Update attempts attribute by 1
     """
-    sql = '''UPDATE codes
+    sql = '''UPDATE code
              SET attempts = attempts + 1
              WHERE _id = ?'''
     cur = conn.cursor()
     with conn:
-        cur.execute(sql, (id, ))
+        cur.execute(sql, (code_id, ))
     cur.close()
 
 
-def get_attempts(conn, id):
+def get_attempts(conn: Connection, code_id):
     """
     Query code attempts by id
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT attempts FROM codes WHERE _id=?", (id, ))
+        cur.execute("SELECT attempts FROM code WHERE _id=?", (code_id, ))
     attempts = cur.fetchone()
 
     return attempts[0]
 
 
-def create_user(conn, user_data):
-    sql = '''INSERT INTO users(gearbox_email, gearbox_password, salt)
-                 VALUES(:gearbox_email, :gearbox_password, :salt)'''
+def create_user(conn: Connection, user_data: dict):
+    sql = '''INSERT INTO user(gearbox_email, gearbox_password)
+                 VALUES(:gearbox_email, :gearbox_password)'''
     cur = conn.cursor()
 
     try:
         with conn:
             cur.execute(sql, user_data)
         conn.commit()
-        print(f'Creating User {user_data["gearbox_email"]} in database table users')
+        print(f'Creating User {user_data["gearbox_email"]} in database table user')
     except sqlite3.IntegrityError as e:
-        print(f'User could not be created due to Integrity issue. Error: {str(e)}')
+        print(f'User {user_data["gearbox_email"]} could not be created due to Integrity issue. Error: {str(e)}')
     except sqlite3.DatabaseError as e:
         print(f'Database Error: {str(e)}')
         conn.rollback()
@@ -243,52 +238,104 @@ def create_user(conn, user_data):
     return cur.lastrowid
 
 
-def select_all_users(conn):
+def select_all_users(conn: Connection):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users")
+    cur.execute('SELECT * FROM user')
     return cur.fetchall()
 
 
-def select_user_by_gearbox_email(conn, gearbox_email):
+def select_user_by_gearbox_email(conn: Connection, gearbox_email: str):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE gearbox_email=?", (gearbox_email, ))
+    cur.execute("SELECT * FROM user WHERE gearbox_email=?", (gearbox_email, ))
     return cur.fetchone()
 
 
-def select_user_by_id(conn, user_id):
+def select_user_by_id(conn: Connection, user_id: int):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE _id=?", (user_id, ))
+    cur.execute("SELECT * FROM user WHERE _id=?", (user_id, ))
     return cur.fetchone()
 
 
-def remove_user_by_id(conn, user_id):
+def remove_user_by_id(conn: Connection, user_id: int):
     cur = conn.cursor()
-    cur.execute("DELETE FROM users WHERE _id=?", (user_id, ))
+    cur.execute("DELETE FROM user WHERE _id=?", (user_id, ))
     conn.commit()
     cur.close()
 
 
-# if __name__ == "__main__":
-#     database = "borderlands_codes.db"
-#     conn = create_connection(database)
-#
-#     if GEARBOX_EMAIL and GEARBOX_PASSWORD:
-#         byte_pass = GEARBOX_PASSWORD.encode('utf-8')
-#         # Generate salt
-#         salt = bcrypt.gensalt()
-#         # Hash password
-#         gearbox_password_hashed = bcrypt.hashpw(byte_pass, salt)
-#
-#         print(GEARBOX_EMAIL)
-#         print(GEARBOX_PASSWORD)
-#         print(bcrypt.checkpw(byte_pass, gearbox_password_hashed))
-#
-#         my_data = {
-#             'gearbox_email': GEARBOX_EMAIL,
-#             'gearbox_password': gearbox_password_hashed,
-#             'salt': salt
-#         }
-#         rowid = create_user(conn, my_data)
-#         print(rowid)
-#         user = select_user_by_gearbox_email(conn, GEARBOX_EMAIL)
-#         print(user)
+def create_user_code(conn: Connection, user_id: int, code_id: int):
+    """
+    A user has used a particular code successfully. Create a row in user_code table
+    to record this.
+
+    :param user_id: id of the user using the code
+    :param code_id: id of the code
+    :return: the id of the last row created
+    """
+    sql = '''INSERT INTO user_code(user_id, code_id)
+                     VALUES(:user_id, :code_id)'''
+    cur = conn.cursor()
+
+    try:
+        with conn:
+            cur.execute(sql, (user_id, code_id,))
+        conn.commit()
+    except sqlite3.IntegrityError as e:
+        print(f'User {user_id} has already used code {code_id}. Error: {str(e)}')
+    except sqlite3.DatabaseError as e:
+        print(f'Database Error: {str(e)}')
+        conn.rollback()
+    except Exception as e:
+        print(f'Error: {str(e)}')
+        conn.rollback()
+
+    return cur.lastrowid
+
+
+def get_user_codes_by_id(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM user_code WHERE user_id=?', (user_id, ))
+    return cur.fetchall()
+
+
+def get_valid_user_codes(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM code WHERE _id NOT IN ('
+                'SELECT code_id FROM user_code WHERE user_id=?)', (user_id,))
+    return cur.fetchall()
+
+
+def encrypt(data: bytes, key: bytes) -> bytes:
+    return Fernet(key).encrypt(data)
+
+
+def decrypt(token: bytes, key: bytes) -> bytes:
+    return Fernet(key).decrypt(token)
+
+
+if __name__ == "__main__":
+    database = "borderlands_codes.db"
+    db_conn = create_connection(database)
+
+    key = os.getenv('BORDERLANDS_USER_CRYPTOGRAPHY_KEY')
+    user = select_user_by_gearbox_email(db_conn, GEARBOX_EMAIL)
+
+    if user is None:
+        if key:
+            if GEARBOX_EMAIL and GEARBOX_PASSWORD:
+                token = encrypt(GEARBOX_PASSWORD.encode(), key.encode())
+
+                my_data = {
+                    'gearbox_email': GEARBOX_EMAIL,
+                    'gearbox_password': token,
+                }
+                rowid = create_user(db_conn, my_data)
+                print(rowid)
+                user = select_user_by_gearbox_email(db_conn, GEARBOX_EMAIL)
+                print(user)
+        else:
+            print('Must have environment variable `BORDERLANDS_USER_CRYPTOGRAPHY_KEY` set.')
+
+    print(user)
+    msg = decrypt(user[2], key.encode())
+    print(msg.decode())
