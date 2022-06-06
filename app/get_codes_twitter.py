@@ -25,11 +25,6 @@ def get_shift_tweets(conn: Connection):
                                exclude_replies=True, include_rts=False, tweet_mode='extended')
 
     for tweet in tweets:
-        with open('tweets.csv', 'a+') as f:
-
-            print(tweet.full_text)
-            f.write(repr(tweet.full_text)+'\n')
-
         code_type, code, game, reward, platform, expires = None, None, None, None, None, None
 
         try:
@@ -143,7 +138,7 @@ def get_expiration(text: str) -> str:
     return "Unknown"
 
 
-def parse_tweet(tweet):
+def parse_tweet(tweet: Status):
     text = tweet.full_text
     game = get_game(text)
     code_type, code = get_code(text)

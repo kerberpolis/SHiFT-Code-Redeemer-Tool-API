@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-
+from app.database_controller import decrypt, KEY
 from app import config
 
 
@@ -18,6 +18,9 @@ class BorderlandsCrawler(object):
     BORDERLANDS_REWARDS_URL = 'https://shift.gearboxsoftware.com/rewards'
 
     def __init__(self, user):
+        if not KEY:
+            print('Must have environment variable `BORDERLANDS_USER_CRYPTOGRAPHY_KEY` set.')
+
         self.user = user
         self.options = FirefoxOptions()
         # self.options.add_argument('-headless')
@@ -50,7 +53,7 @@ class BorderlandsCrawler(object):
             next_url.click()
             return True
         except NoSuchElementException as e:
-            # logging.error(e, exc_info=True)
+            logging.error(e, exc_info=True)
             return False
         except Exception as e:
             # Just print(e) is cleaner and more likely what you want,
@@ -78,7 +81,7 @@ class BorderlandsCrawler(object):
                 user_password = config.GEARBOX_PASSWORD
             else:
                 user_email = self.user[1]
-                user_password = self.user[2]
+                user_password = decrypt(self.user[2], KEY.encode()).decode()
 
             self.input("user_email", user_email)
             self.input("user_password", user_password)

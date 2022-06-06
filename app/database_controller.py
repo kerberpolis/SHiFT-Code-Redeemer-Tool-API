@@ -7,6 +7,8 @@ from cryptography.fernet import Fernet
 
 from app.config import GEARBOX_EMAIL, GEARBOX_PASSWORD
 
+KEY = os.getenv('BORDERLANDS_USER_CRYPTOGRAPHY_KEY')
+
 
 def create_connection(db_file):
     """ create a database connection to a SQLite database """
@@ -20,7 +22,7 @@ def create_connection(db_file):
 
 
 def create_user_table(conn: Connection):
-    sql = """CREATE TABLE IF NOT EXISTS users(
+    sql = """CREATE TABLE IF NOT EXISTS user(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 gearbox_email TEXT NOT NULL UNIQUE,
                 gearbox_password TEXT NOT NULL UNIQUE
@@ -30,7 +32,7 @@ def create_user_table(conn: Connection):
 
 
 def create_code_table(conn: Connection):
-    sql = """CREATE TABLE IF NOT EXISTS codes(
+    sql = """CREATE TABLE IF NOT EXISTS code(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 game TEXT,
                 platform TEXT,
@@ -43,6 +45,19 @@ def create_code_table(conn: Connection):
                 valid INT NOT NULL DEFAULT 0,
                 UNIQUE(game, code, type)
                 UNIQUE(code, type)
+            )"""
+
+    create_table(conn, sql)
+
+
+def create_user_code_table(conn: Connection):
+    sql = """CREATE TABLE IF NOT EXISTS user_code(
+                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                code_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                UNIQUE(user_id, code_id),
+                FOREIGN KEY (code_id) REFERENCES code (_id),
+                FOREIGN KEY (user_id) REFERENCES user (_id)
             )"""
 
     create_table(conn, sql)
@@ -64,11 +79,11 @@ def create_table(conn: Connection, sql: str):
 
 def create_code(conn: Connection, code_data: dict):
     """
-    Create a new code into the codes table.
+    Create a new code into the code table.
     """
     cur = None
 
-    sql = '''INSERT INTO codes(game, platform, code, type, reward, time_gathered, expires)
+    sql = '''INSERT INTO code(game, platform, code, type, reward, time_gathered, expires)
              VALUES(:game, :platform, :code, :type, :reward, :time_gathered, :expires)'''
     cur = conn.cursor()
 
@@ -76,9 +91,10 @@ def create_code(conn: Connection, code_data: dict):
         with conn:
             cur.execute(sql, code_data)
         conn.commit()
-        logging.info(f'Creating {code_data["game"]} code {code_data["code"]} in database table codes')
+        print(f'Creating {code_data["game"]} code {code_data["code"]} in database table code')
     except sqlite3.IntegrityError as e:
-        # logging.debug(f'Code data {code_data} already exists. Error: {str(e)}')  # cannot add due to unique constraints
+        # cannot add due to unique constraint
+        print(f'{code_data["type"]} code {code_data["code"]} already exists. Error: {str(e)}')
         pass
     except sqlite3.DatabaseError as e:
         logging.debug(f'Database Error: {str(e)}')
@@ -94,7 +110,7 @@ def update_invalid_code(conn: Connection, code_id: int):
     """
     update the validity of the code
     """
-    sql = '''UPDATE codes
+    sql = '''UPDATE code
              SET valid = 1
              WHERE _id = ?'''
 
@@ -108,7 +124,7 @@ def update_valid_code(conn: Connection, code_id: int):
     """
     update the validity of the code
     """
-    sql = '''UPDATE codes
+    sql = '''UPDATE code
              SET valid = 0
              WHERE _id = ?'''
 
@@ -123,7 +139,7 @@ def delete_code(conn: Connection, code_id: int):
     """
     Delete a code by code id
     """
-    sql = 'DELETE FROM codes WHERE _id=?'
+    sql = 'DELETE FROM code WHERE _id=?'
     cur = conn.cursor()
     with conn:
         cur.execute(sql, (code_id,))
@@ -134,7 +150,7 @@ def delete_all_codes(conn: Connection):
     """
     Delete all rows in the codes table
     """
-    sql = 'DELETE FROM codes'
+    sql = 'DELETE FROM code'
     cur = conn.cursor()
     with conn:
         cur.execute(sql)
@@ -147,7 +163,7 @@ def select_all_codes(conn: Connection):
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT * FROM codes")
+        cur.execute("SELECT * FROM code")
     rows = cur.fetchall()
 
     return rows
@@ -159,7 +175,7 @@ def select_valid_codes(conn: Connection):
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT * FROM codes WHERE valid=0")
+        cur.execute("SELECT * FROM code WHERE valid=0")
     rows = cur.fetchall()
 
     cur.close()
@@ -167,9 +183,9 @@ def select_valid_codes(conn: Connection):
     return rows
 
 
-def select_codes_by_id(conn: Connection, code_id: int):
+def select_code_by_id(conn: Connection, code_id: int):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM codes WHERE _id=?", (code_id, ))
+    cur.execute("SELECT * FROM code WHERE _id=?", (code_id, ))
     rows = cur.fetchall()
 
     return rows
@@ -179,7 +195,7 @@ def increment_attempts(conn: Connection, code_id: int):
     """
     Update attempts attribute by 1
     """
-    sql = '''UPDATE codes
+    sql = '''UPDATE code
              SET attempts = attempts + 1
              WHERE _id = ?'''
     cur = conn.cursor()
@@ -194,14 +210,14 @@ def get_attempts(conn: Connection, code_id):
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT attempts FROM codes WHERE _id=?", (code_id, ))
+        cur.execute("SELECT attempts FROM code WHERE _id=?", (code_id, ))
     attempts = cur.fetchone()
 
     return attempts[0]
 
 
 def create_user(conn: Connection, user_data: dict):
-    sql = '''INSERT INTO users(gearbox_email, gearbox_password)
+    sql = '''INSERT INTO user(gearbox_email, gearbox_password)
                  VALUES(:gearbox_email, :gearbox_password)'''
     cur = conn.cursor()
 
@@ -209,9 +225,9 @@ def create_user(conn: Connection, user_data: dict):
         with conn:
             cur.execute(sql, user_data)
         conn.commit()
-        print(f'Creating User {user_data["gearbox_email"]} in database table users')
+        print(f'Creating User {user_data["gearbox_email"]} in database table user')
     except sqlite3.IntegrityError as e:
-        print(f'User could not be created due to Integrity issue. Error: {str(e)}')
+        print(f'User {user_data["gearbox_email"]} could not be created due to Integrity issue. Error: {str(e)}')
     except sqlite3.DatabaseError as e:
         print(f'Database Error: {str(e)}')
         conn.rollback()
@@ -224,27 +240,69 @@ def create_user(conn: Connection, user_data: dict):
 
 def select_all_users(conn: Connection):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users")
+    cur.execute('SELECT * FROM user')
     return cur.fetchall()
 
 
 def select_user_by_gearbox_email(conn: Connection, gearbox_email: str):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE gearbox_email=?", (gearbox_email, ))
+    cur.execute("SELECT * FROM user WHERE gearbox_email=?", (gearbox_email, ))
     return cur.fetchone()
 
 
 def select_user_by_id(conn: Connection, user_id: int):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE _id=?", (user_id, ))
+    cur.execute("SELECT * FROM user WHERE _id=?", (user_id, ))
     return cur.fetchone()
 
 
 def remove_user_by_id(conn: Connection, user_id: int):
     cur = conn.cursor()
-    cur.execute("DELETE FROM users WHERE _id=?", (user_id, ))
+    cur.execute("DELETE FROM user WHERE _id=?", (user_id, ))
     conn.commit()
     cur.close()
+
+
+def create_user_code(conn: Connection, user_id: int, code_id: int):
+    """
+    A user has used a particular code successfully. Create a row in user_code table
+    to record this.
+
+    :param user_id: id of the user using the code
+    :param code_id: id of the code
+    :return: the id of the last row created
+    """
+    sql = '''INSERT INTO user_code(user_id, code_id)
+                     VALUES(:user_id, :code_id)'''
+    cur = conn.cursor()
+
+    try:
+        with conn:
+            cur.execute(sql, (user_id, code_id,))
+        conn.commit()
+    except sqlite3.IntegrityError as e:
+        print(f'User {user_id} has already used code {code_id}. Error: {str(e)}')
+    except sqlite3.DatabaseError as e:
+        print(f'Database Error: {str(e)}')
+        conn.rollback()
+    except Exception as e:
+        print(f'Error: {str(e)}')
+        conn.rollback()
+
+    return cur.lastrowid
+
+
+def get_user_codes_by_id(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM user_code WHERE user_id=?', (user_id, ))
+    return cur.fetchall()
+
+
+def get_valid_user_codes(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM code WHERE _id NOT IN ('
+                'SELECT code_id FROM user_code WHERE user_id=?)', (user_id,))
+    return cur.fetchall()
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:
@@ -281,4 +339,3 @@ if __name__ == "__main__":
     print(user)
     msg = decrypt(user[2], key.encode())
     print(msg.decode())
-

@@ -12,16 +12,18 @@ database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
 
 
-def input_borderlands_codes(conn: Connection, user: tuple, codes: list):
+def input_borderlands_codes(conn: Connection, user: tuple):
     logged_in_borderlands = False
     crawler = dtc.BorderlandsCrawler(user)
 
-    for row in codes:
+    for row in database_controller.get_valid_user_codes(conn, user[0]):
         code = row[3]
         code_type = row[4]
         expiry_date = row[7]
 
         if expiry_date:  # allow all keys for now, even if supposedly expired, may still be redeemable
+            user_id, code_id = user[0], row[0]
+
             try:
                 if not logged_in_borderlands:
                     crawler.login_gearbox()
@@ -32,6 +34,11 @@ def input_borderlands_codes(conn: Connection, user: tuple, codes: list):
                     logging.info(f'Redeemed {code_type} code {code}')
                     # update expired attribute in codes table
                     database_controller.update_invalid_code(conn, row[0])
+
+                    # add row to user_code table showing user_id has used a code
+                    user_code_id = database_controller.create_user_code(conn, user_id, code_id)
+                    if user_code_id:
+                        print(f'User {user_id} has successfully used code {code_id}')
             except GearBoxError:
                 logging.info(f'There was an error with gearbox when redeeming code {row[0]}, {code}')
             except ConsoleOptionNotFoundException as e:
@@ -44,8 +51,9 @@ def input_borderlands_codes(conn: Connection, user: tuple, codes: list):
             except CodeFailedException as e:
                 logging.info(str(e))
                 database_controller.update_invalid_code(conn, row[0])
-            except Exception:
-                pass
+                user_code_id = database_controller.create_user_code(conn, user_id, code_id)
+            except Exception as e:
+                print(e)
         else:
             database_controller.update_invalid_code(conn, row[0])
             print(f'This {code_type} code: {code}, has expired')
@@ -76,25 +84,22 @@ def setup_tables(conn: Connection):
     if conn is not None:
         database_controller.create_code_table(conn)
         database_controller.create_user_table(conn)
+        database_controller.create_user_code_table(conn)
     else:
         print("Error! cannot create the database connection.")
 
 
 def start_crawlers(conn: Connection):
-    valid_codes = database_controller.select_valid_codes(conn)
-
-    if valid_codes:
-        for user in database_controller.select_all_users(conn):
-            thread = threading.Thread(target=input_borderlands_codes,
-                                      name=f"borderlands_input_{user[0]}",
-                                      args=(conn, user, valid_codes))
-            thread.start()
-            print(f'{thread.name} has started')
+    for user in database_controller.select_all_users(conn):
+        thread = threading.Thread(target=input_borderlands_codes,
+                                  name=f"borderlands_input_{user[0]}",
+                                  args=(conn, user))
+        thread.start()
+        thread.join()
+        print(f'{thread.name} has started')
 
 
 if __name__ == "__main__":
     setup_logger()
     setup_tables(db_conn)
     start_crawlers(db_conn)
-
-
