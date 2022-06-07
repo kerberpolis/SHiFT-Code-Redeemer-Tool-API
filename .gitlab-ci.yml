@@ -30,7 +30,11 @@ build:
     # Run container tests
     - >
       docker run
-      -env-file .env
+      -e BORDERLANDS_ENCRYPTION_KEY="$BORDERLANDS_ENCRYPTION_KEY"
+      -e TWITTER_ACCESS_TOKEN="$TWITTER_ACCESS_TOKEN"
+      -e TWITTER_ACCESS_TOKEN_SECRET="$TWITTER_ACCESS_TOKEN_SECRET"
+      -e TWITTER_CONSUMER_KEY="$TWITTER_CONSUMER_KEY"
+      -e TWITTER_CONSUMER_SECRET="$TWITTER_CONSUMER_SECRET"
       --rm "$APP_CONTAINER" pytest -vs tests
     - docker run --rm "$APP_CONTAINER" flake8
 
