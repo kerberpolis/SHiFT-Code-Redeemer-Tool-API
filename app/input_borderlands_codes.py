@@ -87,9 +87,9 @@ def start_crawlers(conn: Connection):
         thread = threading.Thread(target=input_borderlands_codes,
                                   name=f"borderlands_input_{user[0]}",
                                   args=(conn, user))
+        print(f'{thread.name} starting.')
         thread.start()
         thread.join()
-        print(f'{thread.name} has started')
 
 
 if __name__ == "__main__":

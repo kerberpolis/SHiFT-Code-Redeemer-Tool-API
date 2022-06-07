@@ -20,7 +20,7 @@ class BorderlandsCrawler(object):
         self.config = config
 
         self.options = FirefoxOptions()
-        self.options.add_argument('-headless')
+        # self.options.add_argument('-headless')
 
         binary = FirefoxBinary(f'/usr/bin/{browser}')  # firefox for laptop, firefox-esr for pi
         # self.options.add_argument('--proxy-server=%s' % PROXY)
