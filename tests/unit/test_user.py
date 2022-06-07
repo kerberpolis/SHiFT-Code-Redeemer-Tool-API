@@ -5,7 +5,7 @@ from app.database_controller import encrypt, decrypt
 
 def test_encrypt_password(sqlite_connection):
     # arrange
-    key = os.getenv('BORDERLANDS_USER_CRYPTOGRAPHY_KEY').encode()
+    key = os.getenv('BORDERLANDS_ENCRYPTION_KEY').encode()
     password = 'test_password'
 
     # act

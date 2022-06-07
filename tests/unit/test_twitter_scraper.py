@@ -14,7 +14,7 @@ test_tweet_data = [
     'KSK33-S5T33-XX5FS-R3BTB-WSXRC\n\nRedeem in-game or at https://t.co/g7ait1JIre\n\nhttps://t.co/WTnYHLB6od',
     'SHiFT CODE\n\nGame: WONDERLANDS\nReward: 3 Skeleton Keys\n\nW9CJT-5XJTB-RRKRS-FTJ3T-BTRKK'
     '\n\nRedeem in-game or at https://t.co/g7ait1JIre\n\nhttps://t.co/Pih3w53rmo',
-    'SHiFT CODE\n\nGame: BORDERLANDS 3\nReward: Pilot Punk Head\n\nWSCBT-R5BB3-66KX9-F3JBT-ZW3JK'
+    'SHiFT CODE\n\nGame: BORDERLANDS 2\nReward: Pilot Punk Head\n\nWSCBT-R5BB3-66KX9-F3JBT-ZW3JK'
     '\n\nRedeem in-game or at https://t.co/g7ait1KggM\n\nhttps://t.co/4ufI8KRyAV',
 
     # 'SHIFT CODE (Classic)\nBORDERLANDS: PRE-SEQUEL\n5 GOLD KEYS\nEXPIRES 08 JUNE\n\nUniversal (Twitter)\n'
@@ -94,11 +94,8 @@ def test_get_reward(test_tweet, expected_reward):
 
 @pytest.mark.parametrize(
     "test_tweet, expected_game",
-    [(test_tweet_data[0], 'WONDERLANDS'),
+    [(test_tweet_data[0], 'Wonderlands'),
      (test_tweet_data[1], 'Borderlands 3'),
-     (test_tweet_data[2], 'WONDERLANDS'),
-     (test_tweet_data[3], 'Borderlands 3'),
-     (test_tweet_data[4], 'WONDERLANDS'),
      (test_tweet_data[5], 'Borderlands 2')]
 )
 def test_get_game(test_tweet, expected_game):
@@ -113,10 +110,7 @@ def test_get_game(test_tweet, expected_game):
     "test_tweet, expected_expiration",
     [(test_tweet_data[0], datetime(datetime.now().year, 6, 9, 5, 0)),
      (test_tweet_data[1], 'Unknown'),
-     (test_tweet_data[2], datetime(datetime.now().year, 6, 2, 5, 0)),
-     (test_tweet_data[3], 'Unknown'),
-     (test_tweet_data[4], 'Unknown'),
-     (test_tweet_data[5], 'Unknown')]
+     (test_tweet_data[2], datetime(datetime.now().year, 6, 2, 5, 0))]
 )
 def test_get_expiration(test_tweet, expected_expiration):
     # act

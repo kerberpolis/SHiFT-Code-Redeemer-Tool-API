@@ -74,7 +74,7 @@ def input_borderlands_codes(conn: Connection, user: tuple):
 def setup_logger():
     logging.basicConfig(filename='logger.log', level=logging.ERROR, format='%(asctime)s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger()
+    logging.getLogger()
 
 
 def setup_tables(conn: Connection):
