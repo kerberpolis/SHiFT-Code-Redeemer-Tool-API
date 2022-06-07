@@ -6,5 +6,6 @@
 *.xml
 *.db
 add_user.py
+example_cron_jobs.txt
 .idea/
 __pycache__/

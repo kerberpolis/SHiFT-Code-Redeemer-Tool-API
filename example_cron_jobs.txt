@@ -1,5 +1,0 @@
-0 * * * * ~/envs/borderlands-code-crawler/bin/activate && cd ~/projects/borderlandscodescraper/ && export PYTHONPATH=. && python3 app/get_codes_json.py
-5 * * * * . ~/envs/borderlands-code-crawler/bin/activate && cd ~/projects/borderlandscodescraper/ && export PYTHONPATH=. && python3 app/get_codes_twitter.py
-30 * * * * . ~/envs/borderlands-code-crawler/bin/activate && cd ~/projects/borderlandscodescraper/ && export PYTHONPATH=. && python3 app/input_borderlands_codes.py
-
-
