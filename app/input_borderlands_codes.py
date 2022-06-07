@@ -48,6 +48,8 @@ def input_borderlands_codes(conn: Connection, user: tuple):
             except GearboxShiftError as e:
                 logging.debug(f'There was an error with gearbox when redeeming code {row[0]}, {code}.')
                 logging.debug(e.args[0])
+                database_controller.set_notify_launch_game(conn, 1, user_id)
+                return
             except ConsoleOptionNotFoundException as e:
                 logging.info(str(e))
                 database_controller.update_invalid_code(conn, row[0])
@@ -89,6 +91,10 @@ def setup_tables(conn: Connection):
 
 def start_crawlers(conn: Connection):
     for user in database_controller.select_all_users(conn):
+        if user[3] == 1:
+            print(f'User {user[1]} cannot enter shift codes until they launch a Borderlands title.'
+                  f' Sending notification email.')
+
         thread = threading.Thread(target=input_borderlands_codes,
                                   name=f"borderlands_input_{user[0]}",
                                   args=(conn, user))

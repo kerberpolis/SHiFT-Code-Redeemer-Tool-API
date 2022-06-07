@@ -20,7 +20,8 @@ def create_user_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 gearbox_email TEXT NOT NULL UNIQUE,
-                gearbox_password TEXT NOT NULL UNIQUE
+                gearbox_password TEXT NOT NULL UNIQUE,
+                notify_launch_game INTEGER CHECK(notify_launch_game IN (0, 1)) NOT NULL DEFAULT 0
             )"""
 
     create_table(conn, sql)
@@ -237,6 +238,12 @@ def select_all_users(conn: Connection):
     return cur.fetchall()
 
 
+def select_users_by_launch_notification(conn: Connection, launch_bool: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM user WHERE notify_launch_game = ?', (launch_bool,))
+    return cur.fetchall()
+
+
 def select_user_by_gearbox_email(conn: Connection, gearbox_email: str):
     cur = conn.cursor()
     cur.execute("SELECT * FROM user WHERE gearbox_email=?", (gearbox_email, ))
@@ -296,6 +303,20 @@ def get_valid_user_codes(conn: Connection, user_id: int):
     cur.execute('SELECT * FROM code WHERE _id NOT IN ('
                 'SELECT code_id FROM user_code WHERE user_id=?)', (user_id,))
     return cur.fetchall()
+
+
+def set_notify_launch_game(conn: Connection, launch_bool: int, user_id: int) -> None:
+    """
+    Update user column notify_launch_game. Values of 1 will be emailed to inform them they
+    must launch a Borderlands title.
+    """
+    sql = '''UPDATE user
+             SET notify_launch_game = ?
+             WHERE _id = ?'''
+    cur = conn.cursor()
+    with conn:
+        cur.execute(sql, (launch_bool, user_id,))
+    cur.close()
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:
