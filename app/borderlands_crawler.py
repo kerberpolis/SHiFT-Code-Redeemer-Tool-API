@@ -87,7 +87,7 @@ class BorderlandsCrawler(object):
     def input_code_gearbox(self, code: str) -> bool:
         time.sleep(1)
         self.driver.get(self.BORDERLANDS_REWARDS_URL)
-        time.sleep(1)
+        time.sleep(3)
 
         self.input('shift_code_input', code)
         self.click('//*[@id="shift_code_check"]')
@@ -103,7 +103,7 @@ class BorderlandsCrawler(object):
         # Website lists 1 or more games the code can be redeemed for, get parent container
         # then list of child elements containing text for relevant game
         parent_game_elem = self.driver.find_element_by_xpath('//*[@id="code_results"]')
-        time.sleep(1)
+        time.sleep(2)
         child_games_set = set(elem.text for elem in parent_game_elem.find_elements_by_tag_name("h2"))
 
         self.check_code_error(code)
