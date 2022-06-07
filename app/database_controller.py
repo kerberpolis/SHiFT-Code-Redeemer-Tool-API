@@ -1,13 +1,8 @@
 import logging
-import os
 import sqlite3
 from sqlite3 import Error, Connection
 
 from cryptography.fernet import Fernet
-
-from app.config import GEARBOX_EMAIL, GEARBOX_PASSWORD
-
-KEY = os.getenv('BORDERLANDS_USER_CRYPTOGRAPHY_KEY')
 
 
 def create_connection(db_file):
@@ -81,8 +76,6 @@ def create_code(conn: Connection, code_data: dict):
     """
     Create a new code into the code table.
     """
-    cur = None
-
     sql = '''INSERT INTO code(game, platform, code, type, reward, time_gathered, expires)
              VALUES(:game, :platform, :code, :type, :reward, :time_gathered, :expires)'''
     cur = conn.cursor()
@@ -267,7 +260,7 @@ def create_user_code(conn: Connection, user_id: int, code_id: int):
     """
     A user has used a particular code successfully. Create a row in user_code table
     to record this.
-
+    :param conn: db connection
     :param user_id: id of the user using the code
     :param code_id: id of the code
     :return: the id of the last row created
@@ -311,31 +304,3 @@ def encrypt(data: bytes, key: bytes) -> bytes:
 
 def decrypt(token: bytes, key: bytes) -> bytes:
     return Fernet(key).decrypt(token)
-
-
-if __name__ == "__main__":
-    database = "borderlands_codes.db"
-    db_conn = create_connection(database)
-
-    key = os.getenv('BORDERLANDS_USER_CRYPTOGRAPHY_KEY')
-    user = select_user_by_gearbox_email(db_conn, GEARBOX_EMAIL)
-
-    if user is None:
-        if key:
-            if GEARBOX_EMAIL and GEARBOX_PASSWORD:
-                token = encrypt(GEARBOX_PASSWORD.encode(), key.encode())
-
-                my_data = {
-                    'gearbox_email': GEARBOX_EMAIL,
-                    'gearbox_password': token,
-                }
-                rowid = create_user(db_conn, my_data)
-                print(rowid)
-                user = select_user_by_gearbox_email(db_conn, GEARBOX_EMAIL)
-                print(user)
-        else:
-            print('Must have environment variable `BORDERLANDS_USER_CRYPTOGRAPHY_KEY` set.')
-
-    print(user)
-    msg = decrypt(user[2], key.encode())
-    print(msg.decode())

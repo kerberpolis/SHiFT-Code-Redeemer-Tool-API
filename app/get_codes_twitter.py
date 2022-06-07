@@ -9,14 +9,14 @@ import tweepy
 from tweepy import OAuthHandler
 from tweepy.models import Status
 
-from app import config
+from app.config import get_config, AppConfig
 from app import database_controller
 
 database = "borderlands_codes.db"
 conn = database_controller.create_connection(database)
 
 
-def get_shift_tweets(conn: Connection):
+def get_shift_tweets(conn: Connection, config: AppConfig = get_config()):
     auth = OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_TOKEN_SECRET)
 
@@ -81,7 +81,7 @@ def get_code(text: str) -> (str, str):
 
 
 #  todo: parse datetime expiration date in tweet. expiration is not always present. Most seem to be in UTC so far.
-def get_date(str_date: str) -> str:
+def get_date(str_date: str):
     tzone_dic = {
         'PST': '-0800',
         'PDT': '-0700',
@@ -93,7 +93,7 @@ def get_date(str_date: str) -> str:
         'EDT': '-0400',
     }
 
-    # datetime does not recognise PST, CST, EST etc for dt formating using %Z,
+    # datetime does not recognise PST, CST, EST etc. for dt formatting using %Z,
     # instead use dict to replace the tz with UTC offset, %z.
     if any(tzone in str_date for tzone in tzone_dic.keys()):
         for key in tzone_dic.keys():

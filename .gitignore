@@ -1,11 +1,10 @@
 # File containing access keys to Twitter API App
-config.py
 *.csv
 *json
 *png
 *.log
 *.xml
 *.db
-app/*.db
+add_user.py
 .idea/
 __pycache__/
