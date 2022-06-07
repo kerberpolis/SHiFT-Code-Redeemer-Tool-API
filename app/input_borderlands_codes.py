@@ -6,7 +6,7 @@ from sqlite3 import Connection
 import app.borderlands_crawler as dtc
 from app import database_controller
 from app.borderlands_crawler import CodeFailedException, GameNotFoundException, \
-    ConsoleOptionNotFoundException, GearBoxError
+    ConsoleOptionNotFoundException, GearboxShiftError, GearboxUnexpectedError
 
 database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
@@ -41,8 +41,13 @@ def input_borderlands_codes(conn: Connection, user: tuple):
                     user_code_id = database_controller.create_user_code(conn, user_id, code_id)
                     if user_code_id:
                         print(f'User {user_id} has successfully used code {code_id}')
-            except GearBoxError:
-                logging.info(f'There was an error with gearbox when redeeming code {row[0]}, {code}')
+            except GearboxUnexpectedError as e:
+                logging.debug(f'There was an error with gearbox when redeeming code {row[0]}, {code}.')
+                logging.debug(e.args[0])
+                return
+            except GearboxShiftError as e:
+                logging.debug(f'There was an error with gearbox when redeeming code {row[0]}, {code}.')
+                logging.debug(e.args[0])
             except ConsoleOptionNotFoundException as e:
                 logging.info(str(e))
                 database_controller.update_invalid_code(conn, row[0])

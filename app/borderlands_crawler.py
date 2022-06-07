@@ -132,7 +132,7 @@ class BorderlandsCrawler(object):
             raise GameNotFoundException(child_games_set)
 
         if 'To continue to redeem SHiFT codes, please launch a SHiFT-enabled title first!' in self.driver.page_source:
-            raise GearBoxError
+            raise GearboxShiftError(f'Cannot continue to input shift codes on this account {self.user[1]}')
 
         self.check_code_error(code)
 
@@ -145,6 +145,8 @@ class BorderlandsCrawler(object):
             raise CodeFailedException(f'Code {code} has already been redeemed')
         if 'This code is not available for your account' in self.driver.page_source:
             raise CodeFailedException(f'Code {code} has not available for your account')
+        if 'Unexpected Error Occurred' in self.driver.page_source:
+            raise GearboxUnexpectedError('Gearbox ran into and unexpected error.')
 
     def tear_down(self):
         self.driver.quit()
@@ -165,5 +167,9 @@ class GameNotFoundException(Exception):
     pass
 
 
-class GearBoxError(Exception):
+class GearboxShiftError(Exception):
+    pass
+
+
+class GearboxUnexpectedError(Exception):
     pass
