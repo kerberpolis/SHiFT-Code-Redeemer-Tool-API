@@ -1,8 +1,7 @@
 variables:
   APP_CONTAINER: "$CI_REGISTRY_IMAGE/borderlands-scraper:$CI_COMMIT_REF_SLUG"
   BUILD_CACHE: "$CI_REGISTRY_IMAGE/borderlands-scraper:build_cache"
-  PROD_ENVIRONMENT_URL: ""
-
+  TWITTER_CONSUMER_KEY: "TWITTER_CONSUMER_KEY"
 
 # Build stage also runs tests on container and pushes to GitLab repository
 stages:
@@ -29,7 +28,14 @@ build:
     - docker push "$BUILD_CACHE"
 
     # Run container tests
-    - docker run --rm "$APP_CONTAINER" pytest -vs tests
+    - >
+      docker run
+      -e BORDERLANDS_ENCRYPTION_KEY="$BORDERLANDS_ENCRYPTION_KEY"
+      -e TWITTER_ACCESS_TOKEN="$TWITTER_ACCESS_TOKEN"
+      -e TWITTER_ACCESS_TOKEN_SECRET="$TWITTER_ACCESS_TOKEN_SECRET"
+      -e TWITTER_CONSUMER_KEY="$TWITTER_CONSUMER_KEY"
+      -e TWITTER_CONSUMER_SECRET="$TWITTER_CONSUMER_SECRET"
+      --rm "$APP_CONTAINER" pytest -vs tests
     - docker run --rm "$APP_CONTAINER" flake8
 
     # Push container to gitlab registry

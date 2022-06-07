@@ -1,10 +1,15 @@
-version: '3.3'
+version: '3.1'
 
 services:
-
-  borderlands-scraper:
+  borderlands_code_crawler:
     build:
       context: .
+    environment:
+      - BORDERLANDS_ENCRYPTION_KEY=${BORDERLANDS_ENCRYPTION_KEY}
+      - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
+      - TWITTER_ACCESS_TOKEN_SECRET=${TWITTER_ACCESS_TOKEN_SECRET}
+      - TWITTER_CONSUMER_KEY=${TWITTER_CONSUMER_KEY}
+      - TWITTER_CONSUMER_SECRET=${TWITTER_CONSUMER_SECRET}
     restart: unless-stopped
     ports:
       - 8000:80
