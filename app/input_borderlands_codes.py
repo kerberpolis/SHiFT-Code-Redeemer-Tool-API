@@ -4,7 +4,7 @@ import threading
 from sqlite3 import Connection
 
 import app.borderlands_crawler as dtc
-from app import config, database_controller
+from app import database_controller
 from app.borderlands_crawler import CodeFailedException, GameNotFoundException, \
     ConsoleOptionNotFoundException, GearBoxError
 
@@ -23,13 +23,15 @@ def input_borderlands_codes(conn: Connection, user: tuple):
 
         if expiry_date:  # allow all keys for now, even if supposedly expired, may still be redeemable
             user_id, code_id = user[0], row[0]
-
             try:
                 if not logged_in_borderlands:
                     crawler.login_gearbox()
                     logged_in_borderlands = True
-                result = crawler.input_code_gearbox(code)
+            except Exception as e:  # todo: catch exceptions when logging into gearbox website
+                print(f'Default Exception: {e.args}')
 
+            try:
+                result = crawler.input_code_gearbox(code)
                 if result:
                     logging.info(f'Redeemed {code_type} code {code}')
                     # update expired attribute in codes table
@@ -51,9 +53,10 @@ def input_borderlands_codes(conn: Connection, user: tuple):
             except CodeFailedException as e:
                 logging.info(str(e))
                 database_controller.update_invalid_code(conn, row[0])
-                user_code_id = database_controller.create_user_code(conn, user_id, code_id)
+                database_controller.create_user_code(conn, user_id, code_id)
             except Exception as e:
-                print(e)
+                print(f'Default Exception: {e}')
+
         else:
             database_controller.update_invalid_code(conn, row[0])
             print(f'This {code_type} code: {code}, has expired')
@@ -64,17 +67,7 @@ def input_borderlands_codes(conn: Connection, user: tuple):
 def setup_logger():
     logging.basicConfig(filename='logger.log', level=logging.ERROR, format='%(asctime)s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
-
-    # send error msg via email using googles smtp server
-    # only works if google account does not have 2-factor authentication on.
-    smtp_handler = logging.handlers.SMTPHandler(mailhost=("smtp.gmail.com", 587),
-                                                fromaddr=config.EMAIL,
-                                                toaddrs=[config.EMAIL],
-                                                subject="Borderlands Auto Redeemer error!",
-                                                credentials=(config.EMAIL, config.PASSWORD),
-                                                secure=())
     logger = logging.getLogger()
-    logger.addHandler(smtp_handler)
 
 
 def setup_tables(conn: Connection):

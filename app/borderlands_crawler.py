@@ -5,47 +5,39 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from app.database_controller import decrypt, KEY
-from app import config
+from app.database_controller import decrypt
+from config import get_config, AppConfig
 
 
 class BorderlandsCrawler(object):
-    user = None
     name = "borderlands_spider"
     start_url = 'https://google.com'
-    allowed_domains = ['www.borderlands.com']
     GEARBOX_URL = 'https://shift.gearboxsoftware.com/home'
     BORDERLANDS_REWARDS_URL = 'https://shift.gearboxsoftware.com/rewards'
 
-    def __init__(self, user):
-        if not KEY:
-            print('Must have environment variable `BORDERLANDS_USER_CRYPTOGRAPHY_KEY` set.')
-
+    def __init__(self, user: tuple, browser: str = 'firefox', config: AppConfig = get_config()):
         self.user = user
-        self.options = FirefoxOptions()
-        # self.options.add_argument('-headless')
+        self.config = config
 
-        binary = FirefoxBinary('/usr/bin/firefox')  # for laptop
-        # binary = FirefoxBinary('/usr/bin/firefox-esr')  # for pi
+        self.options = FirefoxOptions()
+        self.options.add_argument('-headless')
+
+        binary = FirefoxBinary(f'/usr/bin/{browser}')  # firefox for laptop, firefox-esr for pi
         # self.options.add_argument('--proxy-server=%s' % PROXY)
 
         try:
             ua = UserAgent()
+            useragent = ua.random
+            self.options.add_argument(f'user-agent={useragent}')
         except FakeUserAgentError:
             pass
-        useragent = ua.random
-        self.options.add_argument(f'user-agent={useragent}')
+
         self.driver = webdriver.Firefox(firefox_binary=binary, firefox_options=self.options,
                                         executable_path='/usr/local/share/gecko_driver/geckodriver')
-
-        # self.driver = webdriver.Chrome(chrome_options=self.options)
         self.driver.set_window_size(1500, 1000)
         self.driver.get(self.start_url)
 
-        # list of all available slots found
-        self.slots = {}
-
-    def click(self, xpath):
+    def click(self, xpath: str) -> bool:
         try:
             # find elem using xpath
             next_url = self.driver.find_element_by_xpath(xpath)
@@ -63,34 +55,36 @@ class BorderlandsCrawler(object):
             else:
                 print(e)
 
-    def input(self, id, input):
-        input_element = self.driver.find_element_by_id(id)
+    def input(self, elem_id: str, input_str: str) -> None:
+        input_element = self.driver.find_element_by_id(elem_id)
         try:
             # click the button to go to next page
-            input_element.send_keys(input)
+            input_element.send_keys(input_str)
         except Exception as e:
             print(e)
 
-    def login_gearbox(self):
+    def login_gearbox(self) -> None:
         self.driver.get(self.GEARBOX_URL)
-
         time.sleep(1)
+
         try:
-            if not self.user:
-                user_email = config.GEARBOX_EMAIL
-                user_password = config.GEARBOX_PASSWORD
-            else:
-                user_email = self.user[1]
-                user_password = decrypt(self.user[2], KEY.encode()).decode()
+            user_email = self.user[1]
+            user_password = decrypt(self.user[2], self.config.KEY.encode()).decode()
+        except Exception:  # todo: raise exceptions when accessing user details
+            raise Exception('Issue accessing User information.')
 
-            self.input("user_email", user_email)
-            self.input("user_password", user_password)
-            self.click('/html/body/div[1]/div[2]/div[2]/div[1]/div/div[1]/form/div[7]/input')
-        except InvalidSelectorException as exc:
-            logging.debug(exc)
-            logging.debug('Error logging into Gearbox')
+        if user_email and user_password:
+            try:
+                self.input("user_email", user_email)
+                self.input("user_password", user_password)
+                self.click('/html/body/div[1]/div[2]/div[2]/div[1]/div/div[1]/form/div[7]/input')
+            except InvalidSelectorException as exc:
+                logging.debug(exc)
+                logging.debug('Error logging into Gearbox')
+        else:
+            raise Exception('User information not set.')
 
-    def input_code_gearbox(self, code):
+    def input_code_gearbox(self, code: str) -> bool:
         time.sleep(1)
         self.driver.get(self.BORDERLANDS_REWARDS_URL)
         time.sleep(1)
@@ -144,7 +138,7 @@ class BorderlandsCrawler(object):
 
         return True
 
-    def check_code_error(self, code):
+    def check_code_error(self, code: str) -> None:
         if "Failed to redeem your SHiFT code" in self.driver.page_source:
             raise CodeFailedException(f'Code {code} failed to be redeemed')
         if 'This SHiFT code has already been redeemed' in self.driver.page_source:
