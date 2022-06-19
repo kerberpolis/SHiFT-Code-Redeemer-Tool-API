@@ -19,12 +19,11 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
     crawler = dtc.BorderlandsCrawler(user, games)
 
     for row in database_controller.get_valid_user_codes(conn, user[0]):
-        code = row[3]
-        code_type = row[4]
+        code, code_type = row[3], row[4]
         expiry_date = row[7]
+        user_id, code_id = user[0], row[0]
 
         if expiry_date:  # allow all keys for now, even if supposedly expired, may still be redeemable
-            user_id, code_id = user[0], row[0]
             try:
                 if not logged_in_borderlands:
                     crawler.login_gearbox()
@@ -37,18 +36,18 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
                 if result:
                     logging.info(f'Redeemed {code_type} code {code}')
                     # update expired attribute in codes table
-                    database_controller.update_invalid_code(conn, row[0])
+                    database_controller.update_invalid_code(conn, code_id)
 
                     # add row to user_code table showing user_id has used a code
                     user_code_id = database_controller.create_user_code(conn, user_id, code_id)
                     if user_code_id:
                         print(f'User {user_id} has successfully used code {code_id}')
             except GearboxUnexpectedError as e:
-                logging.debug(f'There was an error with gearbox when redeeming code {row[0]}, {code}.')
+                logging.debug(f'There was an error with gearbox when redeeming code {code_id}, {code}.')
                 logging.debug(e.args[0])
                 return
             except GearboxShiftError as e:
-                logging.debug(f'There was an error with gearbox when redeeming code {row[0]}, {code}.')
+                logging.debug(f'There was an error with gearbox when redeeming code {code_id}, {code}.')
                 logging.debug(e.args[0])
                 database_controller.set_notify_launch_game(conn, 1, user_id)
                 return
@@ -63,7 +62,7 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
                 logging.info(str(e))
                 # this exception currently handles code exceptions that may require different handling.
 
-                # database_controller.update_invalid_code(conn, row[0])
+                # database_controller.update_invalid_code(conn, code_id)
                 # database_controller.create_user_code(conn, user_id, code_id)
             except ShiftCodeAlreadyRedeemedException:
                 database_controller.create_user_code(conn, user_id, code_id)
@@ -73,7 +72,7 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
                 print(f'Default Exception: {e}')
 
         else:
-            database_controller.update_invalid_code(conn, row[0])
+            database_controller.update_invalid_code(conn, code_id)
             print(f'This {code_type} code: {code}, has expired')
 
     crawler.tear_down()
