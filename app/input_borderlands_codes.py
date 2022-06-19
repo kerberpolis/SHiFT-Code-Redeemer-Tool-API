@@ -6,15 +6,17 @@ from sqlite3 import Connection
 import app.borderlands_crawler as dtc
 from app import database_controller
 from app.borderlands_crawler import CodeFailedException, GameNotFoundException, \
-    ConsoleOptionNotFoundException, GearboxShiftError, GearboxUnexpectedError
+    PlatformOptionNotFoundException, GearboxShiftError, GearboxUnexpectedError, \
+    ShiftCodeAlreadyRedeemedException, InvalidCodeException, \
+    CodeExpiredException
 
 database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
 
 
-def input_borderlands_codes(conn: Connection, user: tuple):
+def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
     logged_in_borderlands = False
-    crawler = dtc.BorderlandsCrawler(user)
+    crawler = dtc.BorderlandsCrawler(user, games)
 
     for row in database_controller.get_valid_user_codes(conn, user[0]):
         code = row[3]
@@ -50,17 +52,23 @@ def input_borderlands_codes(conn: Connection, user: tuple):
                 logging.debug(e.args[0])
                 database_controller.set_notify_launch_game(conn, 1, user_id)
                 return
-            except ConsoleOptionNotFoundException as e:
+            except PlatformOptionNotFoundException as e:
                 logging.info(str(e))
-                database_controller.update_invalid_code(conn, row[0])
-            except GameNotFoundException as e:
-                logging.info(f'Code {code} cannot be redeemed as code is for a game '
-                             f'you do not own. {str(e)} game is not valid ')
-                database_controller.update_invalid_code(conn, row[0])
+                # database_controller.create_user_code(conn, user_id, code_id)
+            except GameNotFoundException:
+                logging.info(f'Code {code_id} cannot be redeemed for user {user_id} as they do not have a platform '
+                             f'set to redeem it on.')
+                # database_controller.create_user_code(conn, user_id, code_id)
             except CodeFailedException as e:
                 logging.info(str(e))
-                database_controller.update_invalid_code(conn, row[0])
+                # this exception currently handles code exceptions that may require different handling.
+
+                # database_controller.update_invalid_code(conn, row[0])
+                # database_controller.create_user_code(conn, user_id, code_id)
+            except ShiftCodeAlreadyRedeemedException:
                 database_controller.create_user_code(conn, user_id, code_id)
+            except (InvalidCodeException, CodeExpiredException):
+                database_controller.update_invalid_code(conn, code_id)
             except Exception as e:
                 print(f'Default Exception: {e}')
 
@@ -85,6 +93,7 @@ def setup_tables(conn: Connection):
         database_controller.create_code_table(conn)
         database_controller.create_user_table(conn)
         database_controller.create_user_code_table(conn)
+        database_controller.create_user_game_table(conn)
     else:
         print("Error! cannot create the database connection.")
 
@@ -95,12 +104,21 @@ def start_crawlers(conn: Connection):
             print(f'User {user[1]} cannot enter shift codes until they launch a Borderlands title.'
                   f' Sending notification email.')
 
+        user_games = parse_user_games(database_controller.get_user_games(conn, user[0]))
         thread = threading.Thread(target=input_borderlands_codes,
                                   name=f"borderlands_input_{user[0]}",
-                                  args=(conn, user))
+                                  args=(conn, user, user_games))
         print(f'{thread.name} starting.')
         thread.start()
         thread.join()
+
+
+def parse_user_games(user_games: list):
+    user_games_dic = dict()
+    for game in user_games:
+        user_games_dic[game[1]] = game[2]
+
+    return user_games_dic
 
 
 if __name__ == "__main__":
