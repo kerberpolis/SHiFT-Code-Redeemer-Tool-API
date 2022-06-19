@@ -37,8 +37,7 @@ def create_code_table(conn: Connection):
                 reward TEXT DEFAULT Unknown,
                 time_gathered TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 expires TEXT,
-                attempts INT NOT NULL DEFAULT 0,
-                valid INT NOT NULL DEFAULT 0,
+                is_valid INT NOT NULL DEFAULT 1,
                 UNIQUE(game, code, type)
                 UNIQUE(code, type)
             )"""
@@ -118,28 +117,13 @@ def update_invalid_code(conn: Connection, code_id: int):
     update the validity of the code
     """
     sql = '''UPDATE code
-             SET valid = 1
+             SET is_valid = 0
              WHERE _id = ?'''
 
     cur = conn.cursor()
     with conn:
         cur.execute(sql, (code_id, ))
     cur.close()
-
-
-def update_valid_code(conn: Connection, code_id: int):
-    """
-    update the validity of the code
-    """
-    sql = '''UPDATE code
-             SET valid = 0
-             WHERE _id = ?'''
-
-    cur = conn.cursor()
-    with conn:
-        cur.execute(sql, (code_id, ))
-    cur.close()
-    logging.info(f'Code {code_id} has been set to invalid')
 
 
 def delete_code(conn: Connection, code_id: int):
@@ -182,7 +166,7 @@ def select_valid_codes(conn: Connection):
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT * FROM code WHERE valid=0")
+        cur.execute("SELECT * FROM code WHERE is_valid=1")
     rows = cur.fetchall()
 
     cur.close()
@@ -316,7 +300,7 @@ def get_valid_user_codes(conn: Connection, user_id: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM code WHERE _id NOT IN ('
                 'SELECT code_id FROM user_code WHERE user_id=?)'
-                'AND valid = 0', (user_id,))
+                'AND is_valid = 1', (user_id,))
     return cur.fetchall()
 
 
