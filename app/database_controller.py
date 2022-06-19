@@ -46,6 +46,19 @@ def create_code_table(conn: Connection):
     create_table(conn, sql)
 
 
+def create_user_game_table(conn: Connection):
+    sql = """CREATE TABLE IF NOT EXISTS user_game(
+                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                game TEXT NOT NULL,
+                platform TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                UNIQUE(game, platform, user_id),
+                FOREIGN KEY (user_id) REFERENCES user (_id)
+            )"""
+
+    create_table(conn, sql)
+
+
 def create_user_code_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user_code(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -280,6 +293,7 @@ def create_user_code(conn: Connection, user_id: int, code_id: int):
         with conn:
             cur.execute(sql, (user_id, code_id,))
         conn.commit()
+        print(f'Creating user code for user {user_id} and code {code_id}.')
     except sqlite3.IntegrityError as e:
         print(f'User {user_id} has already used code {code_id}. Error: {str(e)}')
     except sqlite3.DatabaseError as e:
@@ -301,7 +315,8 @@ def get_user_codes_by_id(conn: Connection, user_id: int):
 def get_valid_user_codes(conn: Connection, user_id: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM code WHERE _id NOT IN ('
-                'SELECT code_id FROM user_code WHERE user_id=?)', (user_id,))
+                'SELECT code_id FROM user_code WHERE user_id=?)'
+                'AND valid = 0', (user_id,))
     return cur.fetchall()
 
 
@@ -317,6 +332,54 @@ def set_notify_launch_game(conn: Connection, launch_bool: int, user_id: int) -> 
     with conn:
         cur.execute(sql, (launch_bool, user_id,))
     cur.close()
+
+
+def create_user_game(conn: Connection, game: str, platform: str, user_id: int):
+    """
+    A user can set preference for what platform a shift code enabled game can be redeemed for.
+
+    :param conn: db connection
+    :param game: The shift code game to redeem the code.
+    :param platform: The platform for the game to redeem on.
+    :param user_id: id of the user using the code.
+    :return: the id of the last row created.
+    """
+    sql = '''INSERT INTO user_game(game, platform, user-id)
+                     VALUES(:game, :platform, :user_id)'''
+    cur = conn.cursor()
+
+    try:
+        with conn:
+            cur.execute(sql, (game, platform, user_id,))
+        conn.commit()
+    except sqlite3.IntegrityError as e:
+        print(f'User {user_id} has game {game} preference set to {platform} already. Error: {str(e)}')
+    except sqlite3.DatabaseError as e:
+        print(f'Database Error: {str(e)}')
+        conn.rollback()
+    except Exception as e:
+        print(f'Error: {str(e)}')
+        conn.rollback()
+
+    return cur.lastrowid
+
+
+def get_user_games(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM user_game WHERE user_id=?', (user_id,))
+    return cur.fetchall()
+
+
+def remove_user_game(conn: Connection, user_id: int, game: str):
+    cur = conn.cursor()
+    try:
+        cur.execute('DELETE FROM user_game WHERE user_id=? AND game=?', (user_id, game))
+        conn.commit()
+        cur.close()
+    except Exception as e:
+        print(e)
+        import ipdb; ipdb.set_trace()
+    return True
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:
