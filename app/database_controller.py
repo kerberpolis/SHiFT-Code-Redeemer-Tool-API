@@ -63,7 +63,10 @@ def create_user_code_table(conn: Connection):
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 code_id INTEGER NOT NULL,
                 user_id INTEGER NOT NULL,
-                UNIQUE(user_id, code_id),
+                game TEXT,
+                platform TEXT,
+                is_redeem_success INTEGER NOT NULL,
+                UNIQUE(user_id, code_id, game, platform),
                 FOREIGN KEY (code_id) REFERENCES code (_id),
                 FOREIGN KEY (user_id) REFERENCES user (_id)
             )"""
@@ -260,24 +263,29 @@ def remove_user_by_id(conn: Connection, user_id: int):
     cur.close()
 
 
-def create_user_code(conn: Connection, user_id: int, code_id: int):
+def create_user_code(conn: Connection, user_id: int, code_id: int,
+                     game: str, platform: str, is_success: int):
     """
     A user has used a particular code successfully. Create a row in user_code table
     to record this.
     :param conn: db connection
     :param user_id: id of the user using the code
     :param code_id: id of the code
+    :param game: the game the code is being redeemed for
+    :param platform: platform the user redeemed the code for
+    :param is_success: an int representing a bool if the code was successfully redeemed or not
     :return: the id of the last row created
     """
-    sql = '''INSERT INTO user_code(user_id, code_id)
-                     VALUES(:user_id, :code_id)'''
+    sql = '''INSERT INTO user_code(user_id, code_id, game, platform, is_redeem_success)
+                     VALUES(:user_id, :code_id, :game, :platform, :is_success)'''
     cur = conn.cursor()
 
     try:
         with conn:
-            cur.execute(sql, (user_id, code_id,))
+            cur.execute(sql, (user_id, code_id, game, platform, is_success))
         conn.commit()
-        print(f'Creating user code for user {user_id} and code {code_id}.')
+        print(f'Creating user code for user {user_id} and code {code_id} for {game} on {platform}. Code was'
+              f' {"successfully" if is_success == 1 else "unsuccessfully"} redeemed.')
     except sqlite3.IntegrityError as e:
         print(f'User {user_id} has already used code {code_id}. Error: {str(e)}')
     except sqlite3.DatabaseError as e:
@@ -296,11 +304,27 @@ def get_user_codes_by_id(conn: Connection, user_id: int):
     return cur.fetchall()
 
 
-def get_valid_user_codes(conn: Connection, user_id: int):
+def get_valid_codes_by_user(conn: Connection, user_id: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM code WHERE _id NOT IN ('
-                'SELECT code_id FROM user_code WHERE user_id=?)'
+                'SELECT code_id FROM user_code WHERE user_id=?1)'
+                'AND game IN ('
+                'SELECT game FROM user_game WHERE user_id=?1)'
                 'AND is_valid = 1', (user_id,))
+    return cur.fetchall()
+
+
+def get_successful_codes_by_user_id(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM code WHERE _id IN ('
+                'SELECT code_id FROM user_code WHERE user_id=? AND is_redeem_success = 1)', (user_id,))
+    return cur.fetchall()
+
+
+def get_unsuccessful_codes_by_user_id(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM code WHERE _id IN ('
+                'SELECT code_id FROM user_code WHERE user_id=? AND is_redeem_success = 0)', (user_id,))
     return cur.fetchall()
 
 
