@@ -296,10 +296,12 @@ def get_user_codes_by_id(conn: Connection, user_id: int):
     return cur.fetchall()
 
 
-def get_valid_user_codes(conn: Connection, user_id: int):
+def get_valid_codes_by_user(conn: Connection, user_id: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM code WHERE _id NOT IN ('
-                'SELECT code_id FROM user_code WHERE user_id=?)'
+                'SELECT code_id FROM user_code WHERE user_id=?1)'
+                'AND game IN ('
+                'SELECT game FROM user_game WHERE user_id=?1)'
                 'AND is_valid = 1', (user_id,))
     return cur.fetchall()
 
