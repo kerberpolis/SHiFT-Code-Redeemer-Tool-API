@@ -15,9 +15,16 @@ class BorderlandsCrawler(object):
     GEARBOX_URL = 'https://shift.gearboxsoftware.com/home'
     BORDERLANDS_REWARDS_URL = 'https://shift.gearboxsoftware.com/rewards'
 
-    def __init__(self, user: tuple, games: dict, browser: str = 'firefox', config: AppConfig = get_config()):
+    def __init__(self, user: tuple, browser: str = 'firefox', config: AppConfig = get_config()):
         self.user = user
-        self.games = games
+        # Gearbox uses codenames for BL titles.
+        self.game_codes = {
+            'Borderlands: Game of the Year Edition': 'Mopane',
+            'Borderlands 2': 'Willow2',
+            'Borderlands: The Pre-Sequel': 'Cork',
+            'Borderlands 3': 'Oak',
+            'Tiny Tina\'s Wonderlands': 'Daffodil'
+        }
         self.config = config
 
         self.options = FirefoxOptions()
@@ -85,57 +92,31 @@ class BorderlandsCrawler(object):
         else:
             raise Exception('User information not set.')
 
-    def input_code_gearbox(self, code: str) -> bool:
+    def input_shift_code(self, code: str):
         time.sleep(1)
         self.driver.get(self.BORDERLANDS_REWARDS_URL)
         time.sleep(3)
-
         self.input('shift_code_input', code)
         self.click('//*[@id="shift_code_check"]')
+        self.check_code_error(code)
 
-        # check button clicked, checks if code is valid, if not raise exception
-        hidden_div = self.driver.find_element_by_xpath('//*[@id="shift_code_instructions"]')
-        if hidden_div.is_displayed():
-            raise InvalidCodeException(f"SHiFT code: {code} is not a valid SHiFT code")
+        return True
 
-        if "This SHiFT code has expired" in self.driver.page_source:
-            raise CodeExpiredException(f"SHiFT code: {code}, has expired")
+    def redeem_shift_code(self, code: str, game: str, platform: str) -> bool:
+        time.sleep(1)
+        game_code = self.game_codes[game].lower()
+        # Select redeem button for the game on the platform option in from user_game table.
+        if not self.click(f'//input[@value="{game_code}"]/following-sibling::input[@class="submit_button redeem_button"'
+                          f' and contains(@value,"{platform}")]'):
+            raise PlatformOptionNotFoundException(f'Could not redeem code {code} for '
+                                                  f'{game} on {platform}')
+        self.check_code_error(code)
 
-        # get games that the code can be redeemed for
-        games_available = self.get_games_to_redeem_for_code()
-        if games_available:
-            import ipdb;
-            ipdb.set_trace()
+        return True
 
-            self.check_code_error(code)
-
-            # Select game to redeem code for by iterating over games present in page.
-            # If there is more than 1 title the code can be redeemed for, they are ordered by latest release.
-            # Assuming the code can only be redeemed once, if the game is in the
-            # list of user game preferences then redeem the code for that game/platform.
-            for game_available in games_available:
-                if game_available in self.games:
-                    platform = self.games[game_available]
-                    # todo: get redeem buttons in list similar to selecting list of games.
-                    #  If 'platform' in button text, select this button instead of relying on exact match
-                    #  based on db value incase of change in button value.
-                    #  Can @value have operators other than '='?
-                    if not self.click(f'//*[@class="submit_button redeem_button" and @value="Redeem for {platform}"]'):
-                        raise PlatformOptionNotFoundException(f'Could not redeem code {code} for '
-                                                              f'{game_available} on {platform}')
-                    if 'To continue to redeem SHiFT codes, please launch a SHiFT-enabled title first!' in \
-                            self.driver.page_source:  # rate limit hit, cannot continue to redeem codes
-                        raise GearboxShiftError(f'Cannot continue to input shift codes on this account {self.user[1]}')
-
-                    self.check_code_error(code)
-                    return True
-
-            # if no game is found for user to redeem code, throw exception
-            raise GameNotFoundException(games_available)
-
-        return False
-
-    def get_games_to_redeem_for_code(self):
+    def get_games_to_redeem_for_code(self, code: str):
+        """insert the code and return the games that the code can be redeemed for from the page source"""
+        self.input_shift_code(code)
         # Website lists 1 or more games the code can be redeemed for, get parent container
         # then list of child elements containing text for relevant game
         try:
@@ -147,6 +128,11 @@ class BorderlandsCrawler(object):
         return None
 
     def check_code_error(self, code: str) -> None:
+        # check button clicked, checks if code is valid, if not raise exception
+        if self.driver.find_element_by_xpath('//*[@id="shift_code_instructions"]').is_displayed():
+            raise InvalidCodeException(f"SHiFT code: {code} is not a valid SHiFT code")
+        if "This SHiFT code has expired" in self.driver.page_source:
+            raise CodeExpiredException(f"SHiFT code: {code}, has expired")
         if "Failed to redeem your SHiFT code" in self.driver.page_source:  # unknown why this happens
             raise CodeFailedException(f'Code {code} failed to be redeemed')
         if 'This SHiFT code has already been redeemed' in self.driver.page_source:
@@ -154,9 +140,12 @@ class BorderlandsCrawler(object):
             raise ShiftCodeAlreadyRedeemedException(f'Code {code} has already been redeemed')
         if 'This code is not available for your account' in self.driver.page_source:
             # valid, but cannot be redeemed for user
-            raise CodeFailedException(f'Code {code} has not available for your account')
+            raise CodeNotAvailableException(f'Code {code} is not available for your account')
         if 'Unexpected Error Occurred' in self.driver.page_source:  # probably a gearbox related issue
             raise GearboxUnexpectedError('Gearbox ran into and unexpected error.')
+        if 'To continue to redeem SHiFT codes, please launch a SHiFT-enabled title first!' in \
+                self.driver.page_source:  # rate limit hit, cannot continue to redeem codes
+            raise GearboxShiftError(f'Cannot continue to input shift codes on this account {self.user[1]}')
 
     def tear_down(self):
         self.driver.quit()
@@ -182,6 +171,10 @@ class CodeExpiredException(Exception):
 
 
 class ShiftCodeAlreadyRedeemedException(Exception):
+    pass
+
+
+class CodeNotAvailableException(Exception):
     pass
 
 

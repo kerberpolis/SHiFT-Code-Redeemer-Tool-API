@@ -8,7 +8,7 @@ from app import database_controller
 from app.borderlands_crawler import CodeFailedException, GameNotFoundException, \
     PlatformOptionNotFoundException, GearboxShiftError, GearboxUnexpectedError, \
     ShiftCodeAlreadyRedeemedException, InvalidCodeException, \
-    CodeExpiredException
+    CodeExpiredException, CodeNotAvailableException
 
 database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
@@ -16,14 +16,15 @@ db_conn = database_controller.create_connection(database)
 
 def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
     logged_in_borderlands = False
-    crawler = dtc.BorderlandsCrawler(user, games)
+    valid_codes = database_controller.get_valid_codes_by_user(conn, user[0])
+    if valid_codes:
+        crawler = dtc.BorderlandsCrawler(user=user)
+        for row in valid_codes:
+            code, code_type = row[3], row[4]
+            expiry_date = row[7]
+            user_id, code_id = user[0], row[0]
 
-    for row in database_controller.get_valid_user_codes(conn, user[0]):
-        code, code_type = row[3], row[4]
-        expiry_date = row[7]
-        user_id, code_id = user[0], row[0]
-
-        if expiry_date:  # allow all keys for now, even if supposedly expired, may still be redeemable
+            # allow all keys for now, even if supposedly expired, may still be redeemable
             try:
                 if not logged_in_borderlands:
                     crawler.login_gearbox()
@@ -31,17 +32,30 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
             except Exception as e:  # todo: catch exceptions when logging into gearbox website
                 print(f'Default Exception: {e.args}')
 
+            game, platform = None, None
             try:
-                result = crawler.input_code_gearbox(code)
-                if result:
-                    logging.info(f'Redeemed {code_type} code {code}')
-                    # update expired attribute in codes table
-                    database_controller.update_invalid_code(conn, code_id)
+                games_available = crawler.get_games_to_redeem_for_code(code)
+                if games_available:
+                    # Sometimes there can be more than 1 title the code can be redeemed
+                    # for (ZFKJ3-TT3BB-JTBJT-T3JJT-JWX9H). Loop through the games and redeem for each one.
+                    for idx, game_available in enumerate(games_available):
+                        game = game_available
+                        try:  # find the platform the user wants to redeem the code for
+                            platform = games[game]
+                        except KeyError:
+                            # if no game is found for user to redeem code, throw exception
+                            raise GameNotFoundException(game)
 
-                    # add row to user_code table showing user_id has used a code
-                    user_code_id = database_controller.create_user_code(conn, user_id, code_id)
-                    if user_code_id:
-                        print(f'User {user_id} has successfully used code {code_id}')
+                        if idx > 0: crawler.input_shift_code(code)  # insert the code into the input box
+                        # redeem the code for that platform
+                        result = crawler.redeem_shift_code(code, game, platform)
+                        if result:
+                            logging.info(f'Redeemed {code_type} code {code}')
+                            # add row to user_code table showing user_id has used a code
+                            user_code_id = database_controller.create_user_code(conn, user_id, code_id,
+                                                                                game, platform, 1)
+                            if user_code_id:
+                                print(f'User {user_id} has successfully used code {code_id}')
             except GearboxUnexpectedError as e:
                 logging.debug(f'There was an error with gearbox when redeeming code {code_id}, {code}.')
                 logging.debug(e.args[0])
@@ -53,29 +67,31 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
                 return
             except PlatformOptionNotFoundException as e:
                 logging.info(str(e))
-                # database_controller.create_user_code(conn, user_id, code_id)
+                logging.info(f'Code {code_id} cannot be redeemed on {platform}.')
+                database_controller.create_user_code(conn, user_id, code_id,
+                                                     game, platform, 0)
             except GameNotFoundException:
-                logging.info(f'Code {code_id} cannot be redeemed for user {user_id} as they do not have a platform '
-                             f'set to redeem it on.')
-                # database_controller.create_user_code(conn, user_id, code_id)
+                logging.info(f'Code {code_id} cannot be redeemed for user {user_id} as '
+                             f'they do not have a platform set to redeem it on.')
             except CodeFailedException as e:
                 logging.info(str(e))
+                print(e)
                 # this exception currently handles code exceptions that may require different handling.
-
-                # database_controller.update_invalid_code(conn, code_id)
-                # database_controller.create_user_code(conn, user_id, code_id)
+            except CodeNotAvailableException as e:
+                print(e.args[0])
+                database_controller.create_user_code(conn, user_id, code_id,
+                                                     game, platform, 0)
             except ShiftCodeAlreadyRedeemedException:
-                database_controller.create_user_code(conn, user_id, code_id)
+                print('This Shift code has already been redeemed.')
+                database_controller.create_user_code(conn, user_id, code_id,
+                                                     game, platform, 1)
             except (InvalidCodeException, CodeExpiredException):
+                print(f"Shift code {code_id} is no longer valid. Setting to invalid.")
                 database_controller.update_invalid_code(conn, code_id)
             except Exception as e:
                 print(f'Default Exception: {e}')
 
-        else:
-            database_controller.update_invalid_code(conn, code_id)
-            print(f'This {code_type} code: {code}, has expired')
-
-    crawler.tear_down()
+        crawler.tear_down()
 
 
 def setup_logger():
