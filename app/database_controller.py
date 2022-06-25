@@ -186,31 +186,6 @@ def select_code_by_id(conn: Connection, code_id: int):
     return rows
 
 
-def increment_attempts(conn: Connection, code_id: int):
-    """
-    Update attempts attribute by 1
-    """
-    sql = '''UPDATE code
-             SET attempts = attempts + 1
-             WHERE _id = ?'''
-    cur = conn.cursor()
-    with conn:
-        cur.execute(sql, (code_id, ))
-    cur.close()
-
-
-def get_attempts(conn: Connection, code_id):
-    """
-    Query code attempts by id
-    """
-    cur = conn.cursor()
-    with conn:
-        cur.execute("SELECT attempts FROM code WHERE _id=?", (code_id, ))
-    attempts = cur.fetchone()
-
-    return attempts[0]
-
-
 def create_user(conn: Connection, user_data: dict):
     sql = '''INSERT INTO user(gearbox_email, gearbox_password)
                  VALUES(:gearbox_email, :gearbox_password)'''
