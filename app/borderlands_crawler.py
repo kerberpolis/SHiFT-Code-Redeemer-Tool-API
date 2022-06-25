@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from app.database_controller import decrypt
+from app.util import decrypt
 from config import get_config, AppConfig
 
 
@@ -77,7 +77,7 @@ class BorderlandsCrawler(object):
 
         try:
             user_email = self.user[1]
-            user_password = decrypt(self.user[2], self.config.KEY.encode()).decode()
+            user_password = decrypt(self.user[2], self.config.ENCRYPTION_KEY.encode()).decode()
         except Exception:  # todo: raise exceptions when accessing user details
             raise Exception('Issue accessing User information.')
 
