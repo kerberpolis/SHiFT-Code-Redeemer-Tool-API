@@ -152,13 +152,13 @@ def delete_all_codes(conn: Connection):
     cur.close()
 
 
-def select_all_codes(conn: Connection):
+def select_all_codes(conn: Connection, sql: str, params: dict):
     """
     Query all rows in the codes table
     """
     cur = conn.cursor()
     with conn:
-        cur.execute("SELECT * FROM code")
+        cur.execute(sql, params)
     rows = cur.fetchall()
 
     return rows
