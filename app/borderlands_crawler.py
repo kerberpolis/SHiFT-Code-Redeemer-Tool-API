@@ -71,9 +71,9 @@ class BorderlandsCrawler(object):
         except Exception as e:
             print(e)
 
-    def login_gearbox(self) -> None:
+    def login_gearbox(self):
         self.driver.get(self.GEARBOX_URL)
-        time.sleep(1)
+        time.sleep(2)
 
         try:
             user_email = self.user[1]
@@ -86,11 +86,16 @@ class BorderlandsCrawler(object):
                 self.input("user_email", user_email)
                 self.input("user_password", user_password)
                 self.click('/html/body/div[1]/div[2]/div[2]/div[1]/div/div[1]/form/div[7]/input')
+                self.check_logged_in()
             except InvalidSelectorException as exc:
                 logging.debug(exc)
                 logging.debug('Error logging into Gearbox')
         else:
             raise Exception('User information not set.')
+
+    def check_logged_in(self) -> bool:
+        """Checks page source if login was successful"""
+        return True
 
     def input_shift_code(self, code: str):
         time.sleep(1)

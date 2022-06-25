@@ -25,11 +25,15 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
 
             # allow all keys for now, even if supposedly expired, may still be redeemable
             try:
-                if not logged_in_borderlands:
-                    crawler.login_gearbox()
-                    logged_in_borderlands = True
-            except Exception as e:  # todo: catch exceptions when logging into gearbox website
-                print(f'Default Exception: {e.args}')
+                for x in range(2):  # attempt to log in to gearbox site twice
+                    if not logged_in_borderlands:
+                        logged_in_borderlands = crawler.login_gearbox()
+            except Exception as e:  # catch exceptions when logging into gearbox website
+                print(f'Exception occurred when logging into gearbox site: {e.args}')
+
+            if not logged_in_borderlands:  # if still not logged in teardown and raise exception
+                crawler.tear_down()
+                raise GearboxLoginError()
 
             game, platform = None, None
             try:
@@ -133,6 +137,10 @@ def parse_user_games(user_games: list):
         user_games_dic[game[1]] = game[2]
 
     return user_games_dic
+
+
+class GearboxLoginError(Exception):
+    pass
 
 
 if __name__ == "__main__":
