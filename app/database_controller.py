@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 from sqlite3 import Error, Connection
-
+from collections import namedtuple
 from cryptography.fernet import Fernet
 
 
@@ -10,6 +10,7 @@ def create_connection(db_file):
     conn = None
     try:
         conn = sqlite3.connect(db_file, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
     except Error as e:
         print(e)
 

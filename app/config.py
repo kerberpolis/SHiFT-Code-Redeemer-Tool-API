@@ -9,6 +9,12 @@ class AppConfig:
     env_name = ""
     CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET = None, None, None, None
     KEY = None
+    API_ROOT = "/borderlands-code-crawler/"
+    VERSION = "v1"
+    BASE_PATH = API_ROOT + VERSION
+    DOCS_URL = BASE_PATH + "/docs"
+    REDOC_URL = BASE_PATH + "/redoc"
+    OPENAPI_URL = BASE_PATH + "/openapi.json"
 
     def __init__(self):
         env_vars = [
