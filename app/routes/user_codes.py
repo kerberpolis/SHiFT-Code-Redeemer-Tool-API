@@ -5,45 +5,27 @@ from fastapi.exceptions import HTTPException
 
 from app import database_controller
 from app.config import get_config
-from app.errors import InvalidParameterError
-from app.models.queries import code_query
+from app.models.queries import user_id_path
 from app.models.schemas import Code, CodeResponse, ErrorResponse
 
 database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
 
-PARAM_FILTERS = dict(
-    code="AND CODE = :code",
-)
-
 router = APIRouter()
 
 
 @router.get(
-    get_config().BASE_PATH + '/codes',
+    get_config().BASE_PATH + '/user/{user_id}/codes',
     tags=["code"],
     response_model=CodeResponse,
     responses={
         422: {"model": ErrorResponse},
     }
 )
-def get_codes(request: Request, code: str = code_query):
-    # Validate inputs
-    valid_params = {"code"}
-    request_params = set(request.query_params.keys())
-    bad_params = request_params - valid_params
-    if bad_params:
-        raise InvalidParameterError(request=request, params=bad_params)
-
-    # Collect parameters used in this request
-    request_params = {}
-    for param_name in valid_params:
-        if locals()[param_name] is not None:
-            request_params[param_name] = locals()[param_name]
-
+def get_user_codes(request: Request, user_id: int = user_id_path):
     # Query database
     try:
-        rows = query_database(request_params)
+        rows = query_database(user_id)
     except Exception as e:
         logging.error(e)
         raise HTTPException(status_code=500, detail="Database error")
@@ -65,28 +47,17 @@ def get_codes(request: Request, code: str = code_query):
     return response
 
 
-def prepare_select_codes_query(params: list) -> str:
-    filters = {}
-    for filter_name in PARAM_FILTERS:
-        if filter_name in params:
-            filters[filter_name] = PARAM_FILTERS[filter_name]
-        else:
-            filters[filter_name] = ''
-
-    template = """SELECT * FROM code
-                    WHERE 1 = 1
-                    {code}
-    """
-
-    return template.format(**filters)
+def prepare_get_successful_codes():
+    return """SELECT * FROM code WHERE _id IN (
+                SELECT code_id FROM user_code WHERE user_id = :user_id AND is_redeem_success = 1
+            )
+            ORDER BY game DESC"""
 
 
-def query_database(request_params):
+def query_database(user_id: int):
     """Query database and return rows."""
-    sql = prepare_select_codes_query(request_params.keys())
-    rows = database_controller.execute_sql(db_conn, sql=sql, params=request_params)
-
-    return rows
+    sql = prepare_get_successful_codes()
+    return database_controller.execute_sql(db_conn, sql, params={'user_id': user_id})
 
 
 def parse_results(rows):

@@ -17,6 +17,16 @@ def create_connection(db_file):
     return conn
 
 
+def execute_sql(conn: Connection, sql: str, params: dict):
+    """
+    Query all rows in the codes table
+    """
+    cur = conn.cursor()
+    with conn:
+        cur.execute(sql, params)
+    return cur.fetchall()
+
+
 def create_user_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -152,18 +162,6 @@ def delete_all_codes(conn: Connection):
     cur.close()
 
 
-def select_all_codes(conn: Connection, sql: str, params: dict):
-    """
-    Query all rows in the codes table
-    """
-    cur = conn.cursor()
-    with conn:
-        cur.execute(sql, params)
-    rows = cur.fetchall()
-
-    return rows
-
-
 def select_valid_codes(conn: Connection):
     """
     Query codes by validity
@@ -293,7 +291,8 @@ def get_valid_codes_by_user(conn: Connection, user_id: int):
 def get_successful_codes_by_user_id(conn: Connection, user_id: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM code WHERE _id IN ('
-                'SELECT code_id FROM user_code WHERE user_id=? AND is_redeem_success = 1)', (user_id,))
+                'SELECT code_id FROM user_code WHERE user_id=? AND is_redeem_success = 1)'
+                'ORDER BY game DESC', (user_id,))
     return cur.fetchall()
 
 

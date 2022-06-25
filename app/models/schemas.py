@@ -13,6 +13,15 @@ class Code(BaseModel):
     is_valid: int = Field(..., example=1)
 
 
+class UserCode(BaseModel):
+    _id: int = Field(..., example=1)
+    game: str = Field(..., example='Wonderlands')
+    platform: str = Field(..., example='Universal')
+    user_id: int = Field(..., example=1)
+    code_id: int = Field(..., example=110)
+    is_redeem_success: int = Field(..., example=1)
+
+
 class ErrorDetails(BaseModel):
     param: str
     msg: str
@@ -26,6 +35,10 @@ class MinimalResponse(BaseModel):
 
 class CodeResponse(MinimalResponse):
     data: list[Code] = []
+
+
+class UserCodeResponse(MinimalResponse):
+    data: list[UserCode] = []
 
 
 class ErrorResponse(MinimalResponse):
