@@ -13,6 +13,13 @@ class Code(BaseModel):
     is_valid: int = Field(..., example=1)
 
 
+class UserGame(BaseModel):
+    _id: int = Field(..., example=1)
+    game: str = Field(..., example='Wonderlands')
+    platform: str = Field(..., example='Universal')
+    user_id: int = Field(..., example=1)
+
+
 class UserCode(BaseModel):
     _id: int = Field(..., example=1)
     game: str = Field(..., example='Wonderlands')
@@ -39,6 +46,10 @@ class CodeResponse(MinimalResponse):
 
 class UserCodeResponse(MinimalResponse):
     data: list[UserCode] = []
+
+
+class UserGameResponse(MinimalResponse):
+    data: list[UserGame] = []
 
 
 class ErrorResponse(MinimalResponse):

@@ -327,7 +327,7 @@ def create_user_game(conn: Connection, game: str, platform: str, user_id: int):
     :param user_id: id of the user using the code.
     :return: the id of the last row created.
     """
-    sql = '''INSERT INTO user_game(game, platform, user-id)
+    sql = '''INSERT INTO user_game(game, platform, user_id)
                      VALUES(:game, :platform, :user_id)'''
     cur = conn.cursor()
 
