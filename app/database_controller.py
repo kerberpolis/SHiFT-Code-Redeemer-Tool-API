@@ -353,7 +353,7 @@ def get_user_games(conn: Connection, user_id: int):
     return cur.fetchall()
 
 
-def remove_user_game(conn: Connection, user_id: int, game: str):
+def delete_user_game(conn: Connection, user_id: int, game: str):
     cur = conn.cursor()
     try:
         cur.execute('DELETE FROM user_game WHERE user_id=? AND game=?', (user_id, game))

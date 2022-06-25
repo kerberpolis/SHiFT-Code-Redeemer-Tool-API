@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field
 
 
+class UserGameFormData(BaseModel):
+    user_id: int = Field(..., example=1)
+    game: str = Field(..., example="Borderlands 3")
+    platform: str = Field(..., example="Epic")
+
+
 class Code(BaseModel):
     _id: int = Field(..., example=1)
     game: str = Field(..., example='Wonderlands')

@@ -8,6 +8,10 @@ tags_metadata = [
     {
         "name": "code",
         "description": "Query Borderland game codes",
+    },
+    {
+        "name": "user_game",
+        "description": "Query user set user_games for redeeming on specific platforms.",
     }
 ]
 
