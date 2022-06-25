@@ -2,6 +2,7 @@
 from datetime import datetime
 
 import pytz
+from cryptography.fernet import Fernet
 
 
 #  todo: parse datetime expiration date in tweet. expiration is not always present. Most seem to be in UTC so far.
@@ -42,3 +43,11 @@ def convert_date(str_date: str):
                 pass
 
     return "Unknown"
+
+
+def encrypt(data: bytes, key: bytes) -> bytes:
+    return Fernet(key).encrypt(data)
+
+
+def decrypt(token: bytes, key: bytes) -> bytes:
+    return Fernet(key).decrypt(token)

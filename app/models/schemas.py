@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field
 
 
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 class UserGameFormData(BaseModel):
     user_id: int = Field(..., example=1)
     game: str = Field(..., example="Borderlands 3")
@@ -33,6 +39,12 @@ class UserCode(BaseModel):
     user_id: int = Field(..., example=1)
     code_id: int = Field(..., example=110)
     is_redeem_success: int = Field(..., example=1)
+
+
+class User(BaseModel):
+    _id: int = Field(..., example=1)
+    gearbox_email: str = Field(..., example='joe_bloggs@gmail.co.uk')
+    gearbox_password: str = Field(...)
 
 
 class ErrorDetails(BaseModel):

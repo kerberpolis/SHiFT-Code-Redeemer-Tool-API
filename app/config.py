@@ -8,13 +8,14 @@ import os
 class AppConfig:
     env_name = ""
     CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET = None, None, None, None
-    KEY = None
+    ENCRYPTION_KEY = None
     API_ROOT = "/borderlands-code-crawler/"
     VERSION = "v1"
     BASE_PATH = API_ROOT + VERSION
     DOCS_URL = BASE_PATH + "/docs"
     REDOC_URL = BASE_PATH + "/redoc"
     OPENAPI_URL = BASE_PATH + "/openapi.json"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
     def __init__(self):
         env_vars = [
@@ -38,7 +39,7 @@ class AppConfig:
         self.ACCESS_TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
 
         # Encryption Key
-        self.KEY = os.getenv('BORDERLANDS_ENCRYPTION_KEY')
+        self.ENCRYPTION_KEY = os.getenv('BORDERLANDS_ENCRYPTION_KEY')
 
 
 class DevelopAppConfig(AppConfig):

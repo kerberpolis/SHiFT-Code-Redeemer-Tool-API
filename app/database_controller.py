@@ -1,8 +1,6 @@
 import logging
 import sqlite3
 from sqlite3 import Error, Connection
-from collections import namedtuple
-from cryptography.fernet import Fernet
 
 
 def create_connection(db_file):
@@ -17,7 +15,7 @@ def create_connection(db_file):
     return conn
 
 
-def execute_sql(conn: Connection, sql: str, params: dict):
+def execute_sql(conn: Connection, sql: str, params: dict = None):
     """
     Query all rows in the codes table
     """
@@ -212,6 +210,12 @@ def select_all_users(conn: Connection):
     return cur.fetchall()
 
 
+def get_user_by_login_email(conn: Connection, login_email: str):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM user WHERE LOWER(gearbox_email) = LOWER(:login_email)', (login_email, ))
+    return cur.fetchone()
+
+
 def select_users_by_launch_notification(conn: Connection, launch_bool: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM user WHERE notify_launch_game = ?', (launch_bool,))
@@ -363,11 +367,3 @@ def delete_user_game(conn: Connection, user_id: int, game: str):
         print(e)
         import ipdb; ipdb.set_trace()
     return True
-
-
-def encrypt(data: bytes, key: bytes) -> bytes:
-    return Fernet(key).encrypt(data)
-
-
-def decrypt(token: bytes, key: bytes) -> bytes:
-    return Fernet(key).decrypt(token)

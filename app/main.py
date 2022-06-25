@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_config
-from app.routes import codes, user_codes, user_games
+from app.routes import codes, user_codes, user_games, login
 
 tags_metadata = [
     {
@@ -38,6 +38,7 @@ def get_app():
     app.include_router(codes.router)
     app.include_router(user_codes.router)
     app.include_router(user_games.router)
+    app.include_router(login.router)
     return app
 
 
