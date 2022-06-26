@@ -47,8 +47,7 @@ def create_code_table(conn: Connection):
                 time_gathered TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 expires TEXT,
                 is_valid INT NOT NULL DEFAULT 1,
-                UNIQUE(game, code, type)
-                UNIQUE(code, type)
+                UNIQUE(game, code)
             )"""
 
     create_table(conn, sql)

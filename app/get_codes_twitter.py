@@ -75,7 +75,7 @@ def get_code(text: str) -> (str, str):
     shift_regexp = re.compile(r'[Xbox:\s]?(([A-Z\d]{5}-){4}[A-Z\d]{5})')
     shift_match = re.search(shift_regexp, text)
     if shift_match:
-        return "shift", shift_match.group(1)
+        return "SHiFT", shift_match.group(1)
 
     return None, None
 
