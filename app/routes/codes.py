@@ -76,6 +76,7 @@ def prepare_select_codes_query(params: list) -> str:
     template = """SELECT * FROM code
                     WHERE 1 = 1
                     {code}
+                    ORDER BY game DESC
     """
 
     return template.format(**filters)

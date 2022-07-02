@@ -274,6 +274,7 @@ def create_user_code(conn: Connection, user_id: int, code_id: int,
               f' {"successfully" if is_success == 1 else "unsuccessfully"} redeemed.')
     except sqlite3.IntegrityError as e:
         print(f'User {user_id} has already used code {code_id}. Error: {str(e)}')
+        return None
     except sqlite3.DatabaseError as e:
         print(f'Database Error: {str(e)}')
         conn.rollback()
