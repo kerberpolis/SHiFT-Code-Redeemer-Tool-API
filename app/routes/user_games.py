@@ -5,7 +5,7 @@ from fastapi.exceptions import HTTPException
 
 from app import database_controller
 from app.config import get_config
-from app.models.queries import user_id_path
+from app.models.queries import user_id_path, user_game_id_path
 from app.models.schemas import UserGame, UserGameResponse, ErrorResponse, UserGameFormData
 
 database = "borderlands_codes.db"
@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get(
-    get_config().BASE_PATH + '/user/{user_id}/games',
+    get_config().BASE_PATH + '/user_games/{user_id}',
     tags=["user_game"],
     response_model=UserGameResponse,
     responses={
@@ -49,7 +49,7 @@ def get_user_games(request: Request, user_id: int = user_id_path):
 
 
 @router.post(
-    get_config().BASE_PATH + '/user/{user_id}/games',
+    get_config().BASE_PATH + '/user_games',
     tags=["user_game"],
     responses={
         422: {"model": ErrorResponse},
@@ -58,27 +58,31 @@ def get_user_games(request: Request, user_id: int = user_id_path):
 def create_user_game(form_data: UserGameFormData):
     # Query database
     try:
-        database_controller.create_user_game(db_conn, user_id=form_data.user_id,
-                                             game=form_data.game, platform=form_data.platform)
+        row_id = database_controller.create_user_game(db_conn, user_id=form_data.user_id,
+                                                      game=form_data.game, platform=form_data.platform)
     except Exception as e:
         logging.error(e)
         raise HTTPException(status_code=500, detail="Database error")
 
-    return True
+    # Parse results
+    try:
+        return UserGame(**{'_id':row_id, 'game':form_data.game, 'platform':form_data.platform, 'user_id':form_data.user_id})
+    except Exception as e:  # noqa
+        logging.error(e)
+        raise HTTPException(status_code=500, detail="Parsing error")
 
 
 @router.delete(
-    get_config().BASE_PATH + '/user/{user_id}/games',
+    get_config().BASE_PATH + '/user_games/{user_game_id}',
     tags=["user_game"],
     responses={
         422: {"model": ErrorResponse},
     }
 )
-def delete_user_game(form_data: UserGameFormData):
+def delete_user_game(user_game_id: int = user_game_id_path):
     # Query database
     try:
-        database_controller.delete_user_game(db_conn, user_id=form_data.user_id,
-                                             game=form_data.game)
+        database_controller.delete_user_game(db_conn, user_game_id=user_game_id)
     except Exception as e:
         logging.error(e)
         raise HTTPException(status_code=500, detail="Database error")
@@ -87,7 +91,7 @@ def delete_user_game(form_data: UserGameFormData):
 
 
 def prepare_get_user_games():
-    return """SELECT * FROM user_game WHERE user_id = :user_id"""
+    return """SELECT _id, game, platform, user_id FROM user_game WHERE user_id = :user_id"""
 
 
 def query_database(sql: str, user_id: int):

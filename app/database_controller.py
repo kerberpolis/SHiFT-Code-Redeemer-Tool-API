@@ -356,13 +356,14 @@ def get_user_games(conn: Connection, user_id: int):
     return cur.fetchall()
 
 
-def delete_user_game(conn: Connection, user_id: int, game: str):
+def delete_user_game(conn: Connection, user_game_id: int):
     cur = conn.cursor()
     try:
-        cur.execute('DELETE FROM user_game WHERE user_id=? AND game=?', (user_id, game))
+        cur.execute('DELETE FROM user_game WHERE _id=?', (user_game_id,))
         conn.commit()
         cur.close()
     except Exception as e:
         print(e)
-        import ipdb; ipdb.set_trace()
+        return False
+        
     return True

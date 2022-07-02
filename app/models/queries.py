@@ -20,3 +20,11 @@ user_id_path = Path(
     description='The ID of the user in the database.',
     example=1
 )
+
+
+
+user_game_id_path = Path(
+    ...,
+    title='User Game ID',
+    description='The ID of the user game in the database.'
+)
