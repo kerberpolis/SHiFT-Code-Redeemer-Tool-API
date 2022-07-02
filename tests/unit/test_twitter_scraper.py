@@ -1,5 +1,6 @@
 from datetime import datetime
-from app.get_codes_twitter import get_date, get_code, get_reward, get_game, get_expiration
+from app.get_codes_twitter import get_code, get_reward, get_game, get_expiration
+from app.util import convert_date
 import pytest
 
 
@@ -50,7 +51,7 @@ test_tweet_data = [
 )
 def test_get_date(test_input, expected):
     # act
-    parsed_date = get_date(test_input)
+    parsed_date = convert_date(test_input)
 
     # assert
     assert parsed_date == expected
@@ -71,7 +72,7 @@ def test_get_code(test_tweet, expected_code):
     code_type, code = get_code(test_tweet)
 
     # assert
-    assert code_type == "shift"
+    assert code_type == "SHiFT"
     assert code == expected_code
 
 

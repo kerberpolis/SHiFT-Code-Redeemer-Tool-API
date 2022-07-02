@@ -66,7 +66,8 @@ def create_user_game(form_data: UserGameFormData):
 
     # Parse results
     try:
-        return UserGame(**{'_id':row_id, 'game':form_data.game, 'platform':form_data.platform, 'user_id':form_data.user_id})
+        return UserGame(**{'_id': row_id, 'game': form_data.game,
+                           'platform': form_data.platform, 'user_id': form_data.user_id})
     except Exception as e:  # noqa
         logging.error(e)
         raise HTTPException(status_code=500, detail="Parsing error")

@@ -26,8 +26,8 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
             # allow all keys for now, even if supposedly expired, may still be redeemable
             try:
                 # for x in range(2):  # attempt to log in to gearbox site twice
-                    if not logged_in_borderlands:
-                        logged_in_borderlands = crawler.login_gearbox()
+                if not logged_in_borderlands:
+                    logged_in_borderlands = crawler.login_gearbox()
             except Exception as e:  # catch exceptions when logging into gearbox website
                 print(f'Exception occurred when logging into gearbox site: {e.args}')
 
@@ -49,7 +49,8 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
                             # if no game is found for user to redeem code, throw exception
                             raise GameNotFoundException(game)
 
-                        if idx > 0: crawler.input_shift_code(code)  # insert the code into the input box
+                        if idx > 0:
+                            crawler.input_shift_code(code)  # insert the code into the input box
                         # redeem the code for that platform
                         result = crawler.redeem_shift_code(code, game, platform)
                         if result:

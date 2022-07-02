@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 
 
-
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -47,7 +46,8 @@ class User(BaseModel):
     password: str = Field(...)
     gearbox_email: str = Field(None, example='joe_bloggs@gmail.co.uk')
     gearbox_password: str = Field(None)
-    notify_launch_game: int =  Field(..., example=0)
+    notify_launch_game: int = Field(..., example=0)
+
 
 class ErrorDetails(BaseModel):
     param: str

@@ -186,7 +186,7 @@ def select_code_by_id(conn: Connection, code_id: int):
 
 def create_user(conn: Connection, user_data: dict):
     sql = '''INSERT INTO user(email, password, gearbox_email, gearbox_password)
-                 VALUES(:email, password, :gearbox_email, :gearbox_password)'''
+                 VALUES(:email, :password, :gearbox_email, :gearbox_password)'''
     cur = conn.cursor()
 
     try:
@@ -204,6 +204,12 @@ def create_user(conn: Connection, user_data: dict):
         conn.rollback()
 
     return cur.lastrowid
+
+
+def select_all_codes(conn: Connection):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM code')
+    return cur.fetchall()
 
 
 def select_all_users(conn: Connection):
@@ -373,5 +379,5 @@ def delete_user_game(conn: Connection, user_game_id: int):
     except Exception as e:
         print(e)
         return False
-        
+
     return True

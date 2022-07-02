@@ -22,8 +22,9 @@ def test_user_used_codes(sqlite_connection, codes_used, expected_codes_used):
     # act
     if users[0]:
         for code in codes[:codes_used]:
-            code_ids.append(code[0])
-            db.create_user_code(sqlite_connection, users[0][0], code[0])
+            code_ids.append(code['_id'])
+            db.create_user_code(sqlite_connection, users[0]['_id'], code['_id'],
+                                code['game'], code['platform'], 1)
 
         user_codes = db.get_user_codes_by_id(sqlite_connection, users[0][0])
 

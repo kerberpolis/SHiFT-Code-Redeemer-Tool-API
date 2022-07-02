@@ -22,7 +22,6 @@ user_id_path = Path(
 )
 
 
-
 user_game_id_path = Path(
     ...,
     title='User Game ID',

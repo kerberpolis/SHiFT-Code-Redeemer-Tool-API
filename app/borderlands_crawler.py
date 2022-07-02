@@ -93,8 +93,6 @@ class BorderlandsCrawler(object):
                 logging.debug('Error logging into Gearbox')
         else:
             raise Exception('User information not set.')
-        
-
 
     def check_logged_in(self) -> bool:
         """Checks page source if login was successful"""

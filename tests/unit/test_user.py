@@ -1,6 +1,6 @@
 import os
 
-from app.database_controller import encrypt, decrypt
+from app.util import encrypt, decrypt
 
 
 def test_encrypt_password(sqlite_connection):

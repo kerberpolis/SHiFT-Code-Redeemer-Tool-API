@@ -28,16 +28,22 @@ def teardown(sqlite_connection):
 def seed_tables(sqlite_connection):
     users = [
         {
-            'gearbox_email': 'test_email_1',
-            'gearbox_password': 'test_password_1',
+            'email': 'test_email_1',
+            'password': 'test_password_1',
+            'gearbox_email': 'test_gearbox_email_1',
+            'gearbox_password': 'test_gearbox_password_1',
         },
         {
-            'gearbox_email': 'test_email_2',
-            'gearbox_password': 'test_password_2',
+            'email': 'test_email_2',
+            'password': 'test_password_2',
+            'gearbox_email': 'test_gearbox_email_2',
+            'gearbox_password': 'test_gearbox_password_2',
         },
         {
-            'gearbox_email': 'test_email_3',
-            'gearbox_password': 'test_password_3',
+            'email': 'test_email_3',
+            'password': 'test_password_3',
+            'gearbox_email': 'test_gearbox_email_3',
+            'gearbox_password': 'test_gearbox_password_3',
         }
     ]
     for user in users:
