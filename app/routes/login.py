@@ -41,7 +41,7 @@ def login_for_access_token(response: Response,
             detail="Incorrect username or password",
         )
     access_token_expires = timedelta(minutes=get_config().ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(user.gearbox_email, expires_delta=access_token_expires)
+    access_token = create_access_token(user.email, expires_delta=access_token_expires)
     response.set_cookie(
         key="access_token", value=f"Bearer {access_token}", httponly=True
     )
@@ -50,7 +50,7 @@ def login_for_access_token(response: Response,
 
 def authenticate_user(login_email: str, login_password: str):
     user = get_user_by_email(login_email=login_email)
-    if not user or not verify_password(login_password, user.gearbox_password):
+    if not user or not verify_password(login_password, user.password):
         msg = 'Incorrect username or password'
         raise HTTPException(status_code=401, detail=msg)
 
@@ -60,7 +60,7 @@ def authenticate_user(login_email: str, login_password: str):
 def get_user_by_email(login_email: str):
     # Query database
     try:
-        rows = database_controller.get_user_by_login_email(db_conn, login_email)
+        rows = database_controller.select_user_by_email(db_conn, login_email)
     except Exception as e:
         logging.error(e)
         raise HTTPException(status_code=500, detail="Database error")

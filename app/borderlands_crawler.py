@@ -76,8 +76,8 @@ class BorderlandsCrawler(object):
         time.sleep(2)
 
         try:
-            user_email = self.user[1]
-            user_password = decrypt(self.user[2], self.config.ENCRYPTION_KEY.encode()).decode()
+            user_email = self.user[3]
+            user_password = decrypt(self.user[4], self.config.ENCRYPTION_KEY.encode()).decode()
         except Exception:  # todo: raise exceptions when accessing user details
             raise Exception('Issue accessing User information.')
 
@@ -87,11 +87,14 @@ class BorderlandsCrawler(object):
                 self.input("user_password", user_password)
                 self.click('/html/body/div[1]/div[2]/div[2]/div[1]/div/div[1]/form/div[7]/input')
                 self.check_logged_in()
+                return True
             except InvalidSelectorException as exc:
                 logging.debug(exc)
                 logging.debug('Error logging into Gearbox')
         else:
             raise Exception('User information not set.')
+        
+
 
     def check_logged_in(self) -> bool:
         """Checks page source if login was successful"""

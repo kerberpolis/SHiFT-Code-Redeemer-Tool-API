@@ -25,7 +25,7 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
 
             # allow all keys for now, even if supposedly expired, may still be redeemable
             try:
-                for x in range(2):  # attempt to log in to gearbox site twice
+                # for x in range(2):  # attempt to log in to gearbox site twice
                     if not logged_in_borderlands:
                         logged_in_borderlands = crawler.login_gearbox()
             except Exception as e:  # catch exceptions when logging into gearbox website
@@ -117,8 +117,8 @@ def setup_tables(conn: Connection):
 
 
 def start_crawlers(conn: Connection):
-    for user in database_controller.select_all_users(conn):
-        if user[3] == 1:
+    for user in database_controller.select_all_users_with_gearbox(conn):
+        if user[5] == 1:
             print(f'User {user[1]} cannot enter shift codes until they launch a Borderlands title.'
                   f' Sending notification email.')
 

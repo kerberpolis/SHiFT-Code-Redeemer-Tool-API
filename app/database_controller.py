@@ -28,9 +28,12 @@ def execute_sql(conn: Connection, sql: str, params: dict = None):
 def create_user_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                gearbox_email TEXT NOT NULL UNIQUE,
-                gearbox_password TEXT NOT NULL UNIQUE,
-                notify_launch_game INTEGER CHECK(notify_launch_game IN (0, 1)) NOT NULL DEFAULT 0
+                email TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                gearbox_email TEXT UNIQUE,
+                gearbox_password TEXT,
+                notify_launch_game INTEGER CHECK(notify_launch_game IN (0, 1)) NOT NULL DEFAULT 0,
+                UNIQUE(email, gearbox_email)
             )"""
 
     create_table(conn, sql)
@@ -182,17 +185,17 @@ def select_code_by_id(conn: Connection, code_id: int):
 
 
 def create_user(conn: Connection, user_data: dict):
-    sql = '''INSERT INTO user(gearbox_email, gearbox_password)
-                 VALUES(:gearbox_email, :gearbox_password)'''
+    sql = '''INSERT INTO user(email, password, gearbox_email, gearbox_password)
+                 VALUES(:email, password, :gearbox_email, :gearbox_password)'''
     cur = conn.cursor()
 
     try:
         with conn:
             cur.execute(sql, user_data)
         conn.commit()
-        print(f'Creating User {user_data["gearbox_email"]} in database table user')
+        print(f'Creating User {user_data["email"]} in database table user')
     except sqlite3.IntegrityError as e:
-        print(f'User {user_data["gearbox_email"]} could not be created due to Integrity issue. Error: {str(e)}')
+        print(f'User {user_data["email"]} could not be created due to Integrity issue. Error: {str(e)}')
     except sqlite3.DatabaseError as e:
         print(f'Database Error: {str(e)}')
         conn.rollback()
@@ -209,16 +212,22 @@ def select_all_users(conn: Connection):
     return cur.fetchall()
 
 
-def get_user_by_login_email(conn: Connection, login_email: str):
+def select_all_users_with_gearbox(conn: Connection):
     cur = conn.cursor()
-    cur.execute('SELECT * FROM user WHERE LOWER(gearbox_email) = LOWER(:login_email)', (login_email, ))
-    return cur.fetchone()
+    cur.execute('SELECT * FROM user WHERE gearbox_email IS NOT NULL AND gearbox_password IS NOT NULL')
+    return cur.fetchall()
 
 
 def select_users_by_launch_notification(conn: Connection, launch_bool: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM user WHERE notify_launch_game = ?', (launch_bool,))
     return cur.fetchall()
+
+
+def select_user_by_email(conn: Connection, email: str):
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM user WHERE email=?", (email, ))
+    return cur.fetchone()
 
 
 def select_user_by_gearbox_email(conn: Connection, gearbox_email: str):
@@ -285,8 +294,6 @@ def get_valid_codes_by_user(conn: Connection, user_id: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM code WHERE _id NOT IN ('
                 'SELECT code_id FROM user_code WHERE user_id=?1)'
-                'AND game IN ('
-                'SELECT game FROM user_game WHERE user_id=?1)'
                 'AND is_valid = 1', (user_id,))
     return cur.fetchall()
 

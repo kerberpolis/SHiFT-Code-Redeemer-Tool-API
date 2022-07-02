@@ -42,10 +42,12 @@ class UserCode(BaseModel):
 
 
 class User(BaseModel):
-    _id: int = Field(..., example=1)
-    gearbox_email: str = Field(..., example='joe_bloggs@gmail.co.uk')
-    gearbox_password: str = Field(...)
-
+    id: int = Field(..., example=1, alias="_id")
+    email: str = Field(..., example='joe_bloggs@gmail.co.uk')
+    password: str = Field(...)
+    gearbox_email: str = Field(None, example='joe_bloggs@gmail.co.uk')
+    gearbox_password: str = Field(None)
+    notify_launch_game: int =  Field(..., example=0)
 
 class ErrorDetails(BaseModel):
     param: str
