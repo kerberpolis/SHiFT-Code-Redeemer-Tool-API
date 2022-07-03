@@ -8,7 +8,7 @@ from app import database_controller
 from app.borderlands_crawler import CodeFailedException, GameNotFoundException, \
     PlatformOptionNotFoundException, GearboxShiftError, GearboxUnexpectedError, \
     ShiftCodeAlreadyRedeemedException, InvalidCodeException, \
-    CodeExpiredException, CodeNotAvailableException
+    CodeExpiredException, CodeNotAvailableException, GearboxLoginError
 
 database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
@@ -18,7 +18,7 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
     logged_in_borderlands = False
     valid_codes = database_controller.get_valid_codes_by_user(conn, user[0])
     if valid_codes:
-        crawler = dtc.BorderlandsCrawler(user=user)
+        crawler = dtc.BorderlandsCrawler(user=user.dict())
         for row in valid_codes:
             code, code_type = row[3], row[4]
             user_id, code_id = user[0], row[0]
@@ -138,10 +138,6 @@ def parse_user_games(user_games: list):
         user_games_dic[game[1]] = game[2]
 
     return user_games_dic
-
-
-class GearboxLoginError(Exception):
-    pass
 
 
 if __name__ == "__main__":
