@@ -15,7 +15,7 @@ class BorderlandsCrawler(object):
     GEARBOX_URL = 'https://shift.gearboxsoftware.com/home'
     BORDERLANDS_REWARDS_URL = 'https://shift.gearboxsoftware.com/rewards'
 
-    def __init__(self, user: dict, browser: str = 'firefox', config: AppConfig = get_config()):
+    def __init__(self, user: dict, browser: str = 'firefox', headless: bool = True, config: AppConfig = get_config()):
         self.user = user
         # Gearbox uses codenames for BL titles.
         self.game_codes = {
@@ -28,7 +28,8 @@ class BorderlandsCrawler(object):
         self.config = config
 
         self.options = FirefoxOptions()
-        # self.options.add_argument('-headless')
+        if headless:
+            self.options.add_argument('-headless')
 
         binary = FirefoxBinary(f'/usr/bin/{browser}')  # firefox for laptop, firefox-esr for pi
         # self.options.add_argument('--proxy-server=%s' % PROXY)
