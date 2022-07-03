@@ -6,6 +6,11 @@ class Token(BaseModel):
     token_type: str
 
 
+class GearboxFormData(BaseModel):
+    gearbox_email: str = Field(..., example='joe_bloggs@gmail.com')
+    gearbox_password: str = Field(..., example='password')
+
+
 class UserGameFormData(BaseModel):
     user_id: int = Field(..., example=1)
     game: str = Field(..., example="Borderlands 3")

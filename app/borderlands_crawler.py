@@ -6,7 +6,7 @@ from selenium.common.exceptions import NoSuchElementException, InvalidSelectorEx
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from app.util import decrypt
-from config import get_config, AppConfig
+from app.config import get_config, AppConfig
 
 
 class BorderlandsCrawler(object):
@@ -15,7 +15,7 @@ class BorderlandsCrawler(object):
     GEARBOX_URL = 'https://shift.gearboxsoftware.com/home'
     BORDERLANDS_REWARDS_URL = 'https://shift.gearboxsoftware.com/rewards'
 
-    def __init__(self, user: tuple, browser: str = 'firefox', config: AppConfig = get_config()):
+    def __init__(self, user: dict, browser: str = 'firefox', config: AppConfig = get_config()):
         self.user = user
         # Gearbox uses codenames for BL titles.
         self.game_codes = {
@@ -76,8 +76,8 @@ class BorderlandsCrawler(object):
         time.sleep(2)
 
         try:
-            user_email = self.user[3]
-            user_password = decrypt(self.user[4], self.config.ENCRYPTION_KEY.encode()).decode()
+            user_email = self.user['gearbox_email']
+            user_password = decrypt(self.user['gearbox_password'], self.config.ENCRYPTION_KEY.encode()).decode()
         except Exception:  # todo: raise exceptions when accessing user details
             raise Exception('Issue accessing User information.')
 
@@ -86,8 +86,7 @@ class BorderlandsCrawler(object):
                 self.input("user_email", user_email)
                 self.input("user_password", user_password)
                 self.click('/html/body/div[1]/div[2]/div[2]/div[1]/div/div[1]/form/div[7]/input')
-                self.check_logged_in()
-                return True
+                return self.check_logged_in()
             except InvalidSelectorException as exc:
                 logging.debug(exc)
                 logging.debug('Error logging into Gearbox')
@@ -96,7 +95,20 @@ class BorderlandsCrawler(object):
 
     def check_logged_in(self) -> bool:
         """Checks page source if login was successful"""
-        return True
+        import ipdb; ipdb.set_trace()
+
+        if "Incorrect email or password." in self.driver.page_source:  # failed login
+            print(f"User details for {self.user['gearbox_email']} are incorrect.")
+            return False
+
+        try:
+            sign_out_btn = self.driver.find_element_by_xpath('/html/body/div[2]/nav/div/div[2]/ul[2]/li[2]/a')
+            if 'Sign Out' in sign_out_btn.text:
+                return True
+        except NoSuchElementException:
+            return False
+            
+        return False
 
     def input_shift_code(self, code: str):
         time.sleep(1)
