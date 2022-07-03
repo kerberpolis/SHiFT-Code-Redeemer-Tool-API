@@ -95,8 +95,6 @@ class BorderlandsCrawler(object):
 
     def check_logged_in(self) -> bool:
         """Checks page source if login was successful"""
-        import ipdb; ipdb.set_trace()
-
         if "Incorrect email or password." in self.driver.page_source:  # failed login
             print(f"User details for {self.user['gearbox_email']} are incorrect.")
             return False
@@ -107,7 +105,7 @@ class BorderlandsCrawler(object):
                 return True
         except NoSuchElementException:
             return False
-            
+
         return False
 
     def input_shift_code(self, code: str):
