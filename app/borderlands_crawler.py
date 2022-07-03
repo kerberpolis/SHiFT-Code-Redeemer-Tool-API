@@ -90,6 +90,7 @@ class BorderlandsCrawler(object):
             except InvalidSelectorException as exc:
                 logging.debug(exc)
                 logging.debug('Error logging into Gearbox')
+                raise GearboxLoginError('Error logging into Gearbox')
         else:
             raise Exception('User information not set.')
 
@@ -203,4 +204,8 @@ class GearboxShiftError(Exception):
 
 
 class GearboxUnexpectedError(Exception):
+    pass
+
+
+class GearboxLoginError(Exception):
     pass
