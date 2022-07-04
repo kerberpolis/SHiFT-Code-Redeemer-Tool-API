@@ -47,7 +47,11 @@ def register(request: Request, formData: UserFormData, config: AppConfig = Depen
         if formData.gearbox_password:
             formData.gearbox_password = encrypt(formData.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
 
-        return database_controller.create_user(db_conn, formData.dict())
+        user_id = database_controller.create_user(db_conn, formData.dict())
+        if not user_id:
+            raise Exception
     except Exception as e:
         logging.error(e)
-        raise HTTPException(status_code=500, detail="Database error")
+        raise HTTPException(status_code=500, detail=f"Error creating user {formData.email}")
+
+    return user_id
