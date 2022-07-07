@@ -47,7 +47,7 @@ jobs:
       - name: Run Tests   
         # Note that you have to activate the virtualenv in every step
         # because GitHub actions doesn't preserve the environment   
-        run: . venv/bin/activate && pytest -vvs app/tests
+        run: . venv/bin/activate && pytest -vvs tests
       - name: Create archive of dependencies
         run: |
           cd ./venv/lib/python3.7/site-packages
