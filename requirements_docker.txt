@@ -10,3 +10,4 @@ selenium==3.141.0
 pytz
 cryptography
 tweepy
+magnum

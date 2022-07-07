@@ -45,3 +45,7 @@ def get_app():
 
 
 app = get_app()
+
+
+from mangum import Mangum
+handler = Mangum(app)
