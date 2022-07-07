@@ -44,16 +44,27 @@ jobs:
         run: python -m venv venv && source venv/bin/activate && pip3 install -r requirements.txt
         if: steps.cache-venv.outputs.cache-hit != 'true'
 
-      - name: Run Tests   
+      - name: Run Tests
+	envs:
+	  BORDERLANDS_ENCRYPTION_KEY= ${{ secrets.BORDERLANDS_ENCRYPTION_KEY }}
+	  TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+	  TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+	  TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
+	  TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
         # Note that you have to activate the virtualenv in every step
         # because GitHub actions doesn't preserve the environment   
-        run: . venv/bin/activate && pytest -vvs tests
+        run: |
+	  . venv/bin/activate
+	  pytest -vvs tests
+
       - name: Create archive of dependencies
         run: |
           cd ./venv/lib/python3.7/site-packages
           zip -r9 ../../../../api.zip .
+
       - name: Add API files to Zip file
         run: cd ./api && zip -g ../api.zip -r .
+
       - name: Upload zip file artifact
         uses: actions/upload-artifact@v2
         with:
