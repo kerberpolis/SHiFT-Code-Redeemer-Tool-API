@@ -25,7 +25,7 @@ class UserFormData(BaseModel):
 
 
 class Code(BaseModel):
-    _id: int = Field(..., example=1)
+    id: int = Field(..., example=1, alias="_id")
     game: str = Field(..., example='Wonderlands')
     platform: str = Field(..., example='Universal')
     code: str = Field(..., example='BBF33-TFFWZ-KC3KW-3JJJJ-WCXZR')
