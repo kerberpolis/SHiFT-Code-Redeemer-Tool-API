@@ -11,4 +11,4 @@ pytz
 cryptography
 tweepy
 python-jose
-magnum
+mangum
