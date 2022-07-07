@@ -36,12 +36,12 @@ jobs:
         with:
           path: venv # what we cache: the Virtual ENV
           # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements-docker.txt') }}
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements_docker.txt') }}
           restore-keys: |
             ${{ runner.os }}-venv-
       # Step-4 Build a Virtual ENV, but only if it doesn't already exist
       - name: Activate Virtual ENV
-        run: python -m venv venv && source venv/bin/activate && pip3 install -r requirements-docker.txt
+        run: python -m venv venv && source venv/bin/activate && pip3 install -r requirements_docker.txt
         if: steps.cache-venv.outputs.cache-hit != 'true'
 
       - name: Run Tests
