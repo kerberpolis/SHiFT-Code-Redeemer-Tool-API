@@ -4,7 +4,7 @@
 *png
 *.log
 *.xml
-*.db
+borderlands_codes.db
 .env
 add_user.py
 example_cron_jobs.txt

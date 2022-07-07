@@ -67,7 +67,10 @@ def get_user_by_email(login_email: str):
 
     # Parse results
     try:
-        user = parse_results(rows)
+        if rows:
+            user = parse_results(rows)
+        else:
+            return None
     except Exception as e:  # noqa
         logging.error(e)
         raise HTTPException(status_code=500, detail="Parsing error")
@@ -114,9 +117,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
-def parse_results(row):
+def parse_results(rows):
     """Parse rows into schema objects"""
-    return User(**row)
+    return User(**rows)
 
 
 @router.get(

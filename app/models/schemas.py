@@ -6,14 +6,26 @@ class Token(BaseModel):
     token_type: str
 
 
+class GearboxFormData(BaseModel):
+    gearbox_email: str = Field(..., example='joe_bloggs@gmail.com')
+    gearbox_password: str = Field(..., example='password')
+
+
 class UserGameFormData(BaseModel):
     user_id: int = Field(..., example=1)
     game: str = Field(..., example="Borderlands 3")
     platform: str = Field(..., example="Epic")
 
 
+class UserFormData(BaseModel):
+    email: str = Field(..., example='joe_bloggs@gmail.com')
+    password: str = Field(...)
+    gearbox_email: str = Field(None, example='joe_bloggs_gearbox@gmail.com')
+    gearbox_password: str = Field(None)
+
+
 class Code(BaseModel):
-    _id: int = Field(..., example=1)
+    id: int = Field(..., example=1, alias="_id")
     game: str = Field(..., example='Wonderlands')
     platform: str = Field(..., example='Universal')
     code: str = Field(..., example='BBF33-TFFWZ-KC3KW-3JJJJ-WCXZR')
@@ -42,9 +54,9 @@ class UserCode(BaseModel):
 
 class User(BaseModel):
     id: int = Field(..., example=1, alias="_id")
-    email: str = Field(..., example='joe_bloggs@gmail.co.uk')
+    email: str = Field(..., example='joe_bloggs@gmail.com')
     password: str = Field(...)
-    gearbox_email: str = Field(None, example='joe_bloggs@gmail.co.uk')
+    gearbox_email: str = Field(None, example='joe_bloggs@gmail.com')
     gearbox_password: str = Field(None)
     notify_launch_game: int = Field(..., example=0)
 

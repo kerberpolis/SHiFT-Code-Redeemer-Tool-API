@@ -2,13 +2,13 @@ import logging
 import logging.handlers
 import threading
 from sqlite3 import Connection
-
+from app.models.schemas import User, Code
 import app.borderlands_crawler as dtc
 from app import database_controller
 from app.borderlands_crawler import CodeFailedException, GameNotFoundException, \
     PlatformOptionNotFoundException, GearboxShiftError, GearboxUnexpectedError, \
     ShiftCodeAlreadyRedeemedException, InvalidCodeException, \
-    CodeExpiredException, CodeNotAvailableException
+    CodeExpiredException, CodeNotAvailableException, GearboxLoginError
 
 database = "borderlands_codes.db"
 db_conn = database_controller.create_connection(database)
@@ -18,10 +18,12 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
     logged_in_borderlands = False
     valid_codes = database_controller.get_valid_codes_by_user(conn, user[0])
     if valid_codes:
-        crawler = dtc.BorderlandsCrawler(user=user)
+        user = User(**user)
+        crawler = dtc.BorderlandsCrawler(user=user.dict(), headless=False)
         for row in valid_codes:
-            code, code_type = row[3], row[4]
-            user_id, code_id = user[0], row[0]
+            code = Code(**row)
+            shift_code, code_type = code.code, code.type
+            user_id, code_id = user.id, code.id
 
             # allow all keys for now, even if supposedly expired, may still be redeemable
             try:
@@ -37,7 +39,7 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
 
             game, platform = None, None
             try:
-                games_available = crawler.get_games_to_redeem_for_code(code)
+                games_available = crawler.get_games_to_redeem_for_code(shift_code)
                 if games_available:
                     # Sometimes there can be more than 1 title the code can be redeemed
                     # for (ZFKJ3-TT3BB-JTBJT-T3JJT-JWX9H). Loop through the games and redeem for each one.
@@ -50,22 +52,22 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
                             raise GameNotFoundException(game)
 
                         if idx > 0:
-                            crawler.input_shift_code(code)  # insert the code into the input box
+                            crawler.input_shift_code(shift_code)  # insert the code into the input box
                         # redeem the code for that platform
-                        result = crawler.redeem_shift_code(code, game, platform)
+                        result = crawler.redeem_shift_code(shift_code, game, platform)
                         if result:
-                            logging.info(f'Redeemed {code_type} code {code}')
+                            logging.info(f'Redeemed code {shift_code}')
                             # add row to user_code table showing user_id has used a code
                             user_code_id = database_controller.create_user_code(conn, user_id, code_id,
                                                                                 game, platform, 1)
                             if user_code_id:
                                 print(f'User {user_id} has successfully used code {code_id}')
             except GearboxUnexpectedError as e:
-                logging.debug(f'There was an error with gearbox when redeeming code {code_id}, {code}.')
+                logging.debug(f'There was an error with gearbox when redeeming code {code_id}, {shift_code}.')
                 logging.debug(e.args[0])
                 return
             except GearboxShiftError as e:
-                logging.debug(f'There was an error with gearbox when redeeming code {code_id}, {code}.')
+                logging.debug(f'There was an error with gearbox when redeeming code {code_id}, {shift_code}.')
                 logging.debug(e.args[0])
                 database_controller.set_notify_launch_game(conn, 1, user_id)
                 return
@@ -138,10 +140,6 @@ def parse_user_games(user_games: list):
         user_games_dic[game[1]] = game[2]
 
     return user_games_dic
-
-
-class GearboxLoginError(Exception):
-    pass
 
 
 if __name__ == "__main__":
