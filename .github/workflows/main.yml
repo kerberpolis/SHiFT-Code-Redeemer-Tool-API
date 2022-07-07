@@ -1,4 +1,4 @@
-name: FastAPI CI/CD
+name: FastAPI AWS CI/CD
 
 on:
   # Trigger the workflow on push
