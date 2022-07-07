@@ -74,6 +74,9 @@ jobs:
           docker tag ${REPO}:dev ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
           docker push ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
 
+      - name: copy docker-compose file
+        run: scp -i ${{ secrets.EC2_PRIVATE_KEY }} docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}
+
       - name: pull and run on ec2
         uses: appleboy/ssh-action@master
         with:
@@ -85,4 +88,4 @@ jobs:
             docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
             docker stop borderlands-fastapi-dev
             docker rm borderlands-fastapi-dev
-            docker run -it --rm --name borderlands-fastapi-dev -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8081:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
+            docker-compose -f docker-compose.dev.yml up -d
