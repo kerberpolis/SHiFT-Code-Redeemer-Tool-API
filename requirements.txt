@@ -8,7 +8,6 @@ ipdb
 tweepy
 selenium==3.141.0
 pytz
-cryptography
 tweepy
-python-jose
+python-jose[cryptography]
 mangum
