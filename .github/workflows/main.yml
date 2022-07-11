@@ -83,7 +83,7 @@ jobs:
       - name: pull and run on ec2
         uses: appleboy/ssh-action@master
         with:
-          host: ...
+          host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
