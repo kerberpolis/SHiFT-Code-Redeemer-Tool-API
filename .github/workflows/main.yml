@@ -9,7 +9,7 @@ on:
 
 # The Job defines a series of steps that execute on the same runner.
 jobs:
-  CI:
+  build:
     # Define the runner used in the workflow
     runs-on: ubuntu-latest
     steps:   
@@ -57,23 +57,9 @@ jobs:
           . venv/bin/activate
           pytest -vvs tests
 
-      - name: Create archive of dependencies
-        run: |
-          cd ./venv/lib/python3.9/site-packages
-          zip -r9 ../../../../api.zip .
-
-      - name: Add API files to Zip file
-        run: cd ./app && zip -g ../api.zip -r .
-
-      - name: Upload zip file artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: api
-          path: api.zip
-
-  CD:
+  deploy:
     runs-on: ubuntu-latest
-    needs: [CI]
+    needs: [build]
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - name: Configure AWS Credentials
@@ -81,14 +67,25 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Download Lambda api.zip
-        uses: actions/download-artifact@v2
+      - name: build and push docker image
+        env:
+          REPO: borderlands-fastapi
+        run:  |
+          docker build -t $REPO .
+          docker tag $REPO:latest ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+          docker push ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+
+      - name: pull and run on ec2
+        uses: appleboy/ssh-action@master
         with:
-          name: api
-      - name: Upload to S3
-        run: aws s3 cp api.zip s3://borderlands-angular-github-amazon-s3/api.zip
-      
-      - name: Deploy new Lambda
-        run: aws lambda update-function-code --function-name fastapi --s3-bucket borderlands-angular-github-amazon-s3 --s3-key api.zip
+          host: ...
+          username: ec2-user
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_BORDERLANDS_ECR }}
+            docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+            docker stop borderlands-fastapi
+            docker rm borderlands-fastapi
+            docker run --env-file ~/borderlands_codes_envs --name borderlands-fastapi -dp 8080:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:latest

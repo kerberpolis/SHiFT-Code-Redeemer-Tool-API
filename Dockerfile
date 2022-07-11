@@ -1,11 +1,9 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9-slim
 
-WORKDIR /app
+COPY ./app ./app
+COPY ./requirements_docker.txt ./requirements_docker.txt
+COPY ./borderlands_codes.db ./borderlands_codes.db
 
-COPY ./requirements.txt /app/requirements_docker.txt
-RUN pip3 install -r requirements_docker.txt
-
-COPY ./app /app/app
-COPY ./tests /app/tests
-
-COPY .flake8 /app/.flake8
+RUN pip3 install -r ./requirements_docker.txt
+EXPOSE 8080
+CMD ["uvicorn", "app.main:app", "--reload", "--port", "8080", "--host", "0.0.0.0"]
