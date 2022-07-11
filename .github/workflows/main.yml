@@ -69,6 +69,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: build and push docker image
         env:
           REPO: borderlands-fastapi
