@@ -73,8 +73,8 @@ jobs:
         env:
           REPO: borderlands-fastapi
         run:  |
-          docker build -t $REPO .
-          docker tag $REPO:latest ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+          docker build -t ${REPO} .
+          docker tag ${REPO}:latest ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
           docker push ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
 
       - name: pull and run on ec2
