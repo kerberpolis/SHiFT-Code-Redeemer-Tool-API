@@ -38,7 +38,7 @@ def get_app():
     # Add CORS headers response from requests where Origin header is set
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=['*'],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -49,7 +49,6 @@ def get_app():
     app.include_router(user_games.router)
     app.include_router(login.router)
     app.include_router(account.router)
-
 
     return app
 
