@@ -92,4 +92,4 @@ jobs:
             docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
             docker stop borderlands-fastapi
             docker rm borderlands-fastapi
-            docker run --env-file ~/borderlands_codes_envs --name borderlands-fastapi -dp 8080:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+            docker run -it --rm --name borderlands-fastapi -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8080:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
