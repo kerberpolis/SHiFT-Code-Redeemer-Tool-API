@@ -1,24 +1,18 @@
-name: FastAPI AWS CI/CD
+name: FastAPI AWS CI/CD production 
 
 on:
-  # Trigger the workflow on push
   push:
-    branches: 
-      # Push events on main branch
+    branches-ignore: 
       - master 
 
-# The Job defines a series of steps that execute on the same runner.
 jobs:
   build:
-    # Define the runner used in the workflow
     runs-on: ubuntu-latest
     steps:   
-      # Check out repo so our workflow can access it
       - uses: actions/checkout@v2
       
       # Step-1 Setup Python
       - name: Set up Python
-        # This action sets up a Python environment for use in actions
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
@@ -53,8 +47,9 @@ jobs:
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
         # Note that you have to activate the virtualenv in every step
         # because GitHub actions doesn't preserve the environment   
-        run: . venv/bin/activate && pytest -vvs app/tests
-
+        run: |
+          . venv/bin/activate
+          pytest -vvs tests
 
   deploy:
     runs-on: ubuntu-latest
@@ -91,4 +86,4 @@ jobs:
             docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
             docker stop borderlands-fastapi
             docker rm borderlands-fastapi
-            docker run -it --rm --name borderlands-fastapi -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8080:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+            docker run -it --rm --name borderlands-fastapi -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8081:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
