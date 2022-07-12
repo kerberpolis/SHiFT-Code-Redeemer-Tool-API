@@ -67,12 +67,12 @@ jobs:
 
       - name: build and push docker image
         env:
-          REPO: borderlands-fastapi-dev
+          REPO: borderlands-fastapi
         run:  |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_BORDERLANDS_ECR }}
-          docker build -t ${REPO} .
-          docker tag ${REPO}:latest ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
-          docker push ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
+          docker build -t ${REPO}:dev .
+          docker tag ${REPO}:dev ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
+          docker push ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
 
       - name: pull and run on ec2
         uses: appleboy/ssh-action@master
@@ -82,7 +82,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_BORDERLANDS_ECR }}
-            docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
+            docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
             docker stop borderlands-fastapi-dev
             docker rm borderlands-fastapi-dev
-            docker run -it --rm --name borderlands-fastapi-dev -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8081:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
+            docker run -it --rm --name borderlands-fastapi-dev -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8081:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:dev
