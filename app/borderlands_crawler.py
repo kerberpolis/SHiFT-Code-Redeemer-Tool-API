@@ -7,6 +7,7 @@ from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from app.util import decrypt
 from app.config import get_config, AppConfig
+from webdriver_manager.firefox import GeckoDriverManager
 
 class BorderlandsCrawler(object):
     name = "borderlands_spider"
@@ -42,7 +43,7 @@ class BorderlandsCrawler(object):
 
         try:
             self.driver = webdriver.Firefox(firefox_binary=binary, firefox_options=self.options,
-                                            executable_path='/usr/local/share/gecko_driver/geckodriver')
+                                            executable_path=GeckoDriverManager(version="v0.30.0").install())
             self.driver.set_window_size(1500, 1000)
             self.driver.get(self.start_url)
         except WebDriverException as e:

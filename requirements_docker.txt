@@ -11,3 +11,4 @@ tweepy
 mangum
 python-multipart
 PyGithub
+webdriver-manager
