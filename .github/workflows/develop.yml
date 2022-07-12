@@ -1,4 +1,4 @@
-name: FastAPI AWS CI/CD production 
+name: FastAPI AWS CI/CD develop 
 
 on:
   push:
@@ -54,7 +54,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -68,12 +67,12 @@ jobs:
 
       - name: build and push docker image
         env:
-          REPO: borderlands-fastapi
+          REPO: borderlands-fastapi-dev
         run:  |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_BORDERLANDS_ECR }}
           docker build -t ${REPO} .
-          docker tag ${REPO}:latest ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
-          docker push ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+          docker tag ${REPO}:latest ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
+          docker push ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
 
       - name: pull and run on ec2
         uses: appleboy/ssh-action@master
@@ -83,7 +82,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_BORDERLANDS_ECR }}
-            docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
-            docker stop borderlands-fastapi
-            docker rm borderlands-fastapi
-            docker run -it --rm --name borderlands-fastapi -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8081:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+            docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
+            docker stop borderlands-fastapi-dev
+            docker rm borderlands-fastapi-dev
+            docker run -it --rm --name borderlands-fastapi-dev -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8081:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}-dev:latest
