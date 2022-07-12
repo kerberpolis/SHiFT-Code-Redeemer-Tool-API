@@ -76,6 +76,7 @@ jobs:
         env:
           REPO: borderlands-fastapi
         run:  |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_BORDERLANDS_ECR }}
           docker build -t ${REPO} .
           docker tag ${REPO}:latest ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
           docker push ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
