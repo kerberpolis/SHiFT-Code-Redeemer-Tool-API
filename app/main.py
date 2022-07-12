@@ -16,12 +16,11 @@ tags_metadata = [
 ]
 
 origins = [
-    "http://localhost:8080",
+    "http://localhost:8100",
     "http://localhost",
-    "http://borderlands-angular-github-amazon-s3.s3-website.eu-west-2.amazonaws.com",
-    "http://shift-code-tool-review.s3-website.eu-west-2.amazonaws.com",
-    "http://shift-code-tool-develop.s3-website.eu-west-2.amazonaws.com",
-    "http://shift-code-tool-production.s3-website.eu-west-2.amazonaws.com"
+    "http://shift-code-tool-review.s3-website.eu-west-2.amazonaws.com/*",
+    "http://shift-code-tool-develop.s3-website.eu-west-2.amazonaws.com/*",
+    "http://shift-code-tool-production.s3-website.eu-west-2.amazonaws.com/*"
 ]
 
 
