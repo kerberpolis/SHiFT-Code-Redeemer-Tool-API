@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 name: FastAPI AWS CI/CD develop 
+=======
+name: FastAPI AWS CI/CD production 
+>>>>>>> add deployment for dev api
 
 on:
   push:
