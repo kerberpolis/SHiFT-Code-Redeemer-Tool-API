@@ -33,16 +33,9 @@ RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
 
 
 # install python requirements
-COPY ./requirements_docker.txt ./requirements_docker.txt
-RUN pip3 install -r ./requirements_docker.txt
-
-# Copy app
 COPY ./requirements_docker.txt /app/requirements_docker.txt
 RUN pip3 install -r /app/requirements_docker.txt
 
-RUN apt-get update && apt-get -y install nano
-
-# Copy app
 ARG USER=admin
 ARG UID=1000
 ARG GID=1000
@@ -52,6 +45,7 @@ RUN mkdir /db
 RUN chown -R $UID:$GID /db
 RUN chmod 777 /db
 
+# Copy app
 WORKDIR /app
 COPY ./app ./app
 
@@ -60,6 +54,5 @@ RUN chown -R $UID:$GID /app \
   && useradd -m -u $UID -g $GID -o -s /bin/bash $USER
 
 USER $USER
-
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
