@@ -1,0 +1,9 @@
+# get codes from sources
+0 * * * * python3 app/get_codes_json.py 2>> /var/log/get_codes.err
+5 * * * * python3 app/get_codes_twitter.py 2>> /var/log/get_codes.err
+
+# input codes
+30 * * * * python3 app/input_borderlands_codes.py 1>> /var/log/input.log 2>> /var/log/input.err
+
+# backup sqlite .db
+0 8 * * * sqlite3 borderlands_codes.db ".backup borderlands_codes_bak/borderlands_codes_$(date '+\%Y_\%m_\%dT\%H:\%M').bak" 1> /dev/null 2> borderlands_codes_bak/log.err

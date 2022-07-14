@@ -1,12 +1,11 @@
-# File containing access keys to Twitter API App
 *.csv
 *json
 *png
 *.log
 *.xml
 borderlands_codes.db
+borderlands_codes_envs
 .env
 add_user.py
-example_cron_jobs.txt
 .idea/
 __pycache__/
