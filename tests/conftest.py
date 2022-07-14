@@ -1,9 +1,16 @@
 import pytest
-
+from starlette.testclient import TestClient
+from app import main
 from app import database_controller
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function")
+def test_client():
+    app = main.get_app()
+    yield TestClient(app)
+
+
+@pytest.fixture(scope="function")
 def sqlite_connection():
     database = "./tests/files/test_borderlands_codes.db"
     conn = database_controller.create_connection(database)

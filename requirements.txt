@@ -11,3 +11,4 @@ pytz
 tweepy
 python-jose[cryptography]
 mangum
+PyGithub

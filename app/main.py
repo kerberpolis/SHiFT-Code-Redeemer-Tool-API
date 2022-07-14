@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from mangum import Mangum
 
 from app.config import get_config
-from app.routes import codes, user_codes, user_games, login, account
+from app.routes import codes, user_codes, user_games, login, account, feedback
 
 tags_metadata = [
     {
@@ -48,12 +49,10 @@ def get_app():
     app.include_router(user_games.router)
     app.include_router(login.router)
     app.include_router(account.router)
+    app.include_router(feedback.router)
 
     return app
 
 
 app = get_app()
-
-
-from mangum import Mangum
 handler = Mangum(app)
