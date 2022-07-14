@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 from app.config import get_config
 from app.routes import codes, user_codes, user_games, login, account
@@ -13,6 +13,14 @@ tags_metadata = [
         "name": "user_game",
         "description": "Query user set user_games for redeeming on specific platforms.",
     }
+]
+
+origins = [
+    "http://localhost:8100",
+    "http://localhost",
+    "http://shift-code-tool-review.s3-website.eu-west-2.amazonaws.com/*",
+    "http://shift-code-tool-develop.s3-website.eu-west-2.amazonaws.com/*",
+    "http://shift-code-tool-production.s3-website.eu-west-2.amazonaws.com/*"
 ]
 
 
@@ -29,7 +37,7 @@ def get_app():
     # Add CORS headers response from requests where Origin header is set
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -45,3 +53,7 @@ def get_app():
 
 
 app = get_app()
+
+
+from mangum import Mangum
+handler = Mangum(app)
