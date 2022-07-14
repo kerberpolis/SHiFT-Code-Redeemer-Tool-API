@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9-slim
+FROM python:3.9-slim
 
 RUN apt-get update && apt-get -y install cron sqlite3
 
@@ -37,7 +37,29 @@ COPY ./requirements_docker.txt ./requirements_docker.txt
 RUN pip3 install -r ./requirements_docker.txt
 
 # Copy app
-COPY ./app ./app
-EXPOSE 8080
+COPY ./requirements_docker.txt /app/requirements_docker.txt
+RUN pip3 install -r /app/requirements_docker.txt
 
-CMD ["uvicorn", "app.main:app", "--reload", "--port", "8080", "--host", "0.0.0.0"]
+RUN apt-get update && apt-get -y install nano
+
+# Copy app
+ARG USER=admin
+ARG UID=1000
+ARG GID=1000
+ARG GROUP=admin
+
+RUN mkdir /db
+RUN chown -R $UID:$GID /db
+RUN chmod 777 /db
+
+WORKDIR /app
+COPY ./app ./app
+
+RUN chown -R $UID:$GID /app \
+  && groupadd -g $GID $GROUP \
+  && useradd -m -u $UID -g $GID -o -s /bin/bash $USER
+
+USER $USER
+
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
