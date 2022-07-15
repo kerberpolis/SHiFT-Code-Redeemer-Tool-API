@@ -78,7 +78,8 @@ class BorderlandsCrawler(object):
 
         try:
             user_email = self.user['gearbox_email']
-            user_password = decrypt(self.user['gearbox_password'].encode(), self.config.ENCRYPTION_KEY.encode()).decode()
+            user_password = decrypt(self.user['gearbox_password'].encode(),
+                                    self.config.ENCRYPTION_KEY.encode()).decode()
         except Exception:  # todo: raise exceptions when accessing user details
             raise Exception('Issue accessing User information.')
 

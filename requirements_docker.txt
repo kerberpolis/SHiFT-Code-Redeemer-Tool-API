@@ -10,3 +10,4 @@ python-jose[cryptography]
 tweepy
 mangum
 python-multipart
+PyGithub

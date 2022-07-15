@@ -22,7 +22,7 @@ def input_borderlands_codes(conn: Connection, user: tuple, games: dict):
         crawler = dtc.BorderlandsCrawler(user=user.dict(), headless=False)
         for row in valid_codes:
             code = Code(**row)
-            shift_code, code_type = code.code, code.type
+            shift_code = code.code
             user_id, code_id = user.id, code.id
 
             # allow all keys for now, even if supposedly expired, may still be redeemable

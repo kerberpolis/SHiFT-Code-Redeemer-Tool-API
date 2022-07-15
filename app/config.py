@@ -16,6 +16,7 @@ class AppConfig:
     REDOC_URL = BASE_PATH + "/redoc"
     OPENAPI_URL = BASE_PATH + "/openapi.json"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    GITHUB_ACCESS_TOKEN = None
 
     def __init__(self):
         env_vars = [
@@ -23,7 +24,8 @@ class AppConfig:
             'TWITTER_CONSUMER_SECRET',
             'TWITTER_ACCESS_TOKEN',
             'TWITTER_ACCESS_TOKEN_SECRET',
-            'BORDERLANDS_ENCRYPTION_KEY'
+            'BORDERLANDS_ENCRYPTION_KEY',
+            'GITHUB_ACCESS_TOKEN'
         ]
         for env_var in env_vars:
             if env_var not in os.environ:
@@ -40,6 +42,9 @@ class AppConfig:
 
         # Encryption Key
         self.ENCRYPTION_KEY = os.getenv('BORDERLANDS_ENCRYPTION_KEY')
+
+        # Github Token
+        self.GITHUB_ACCESS_TOKEN = os.getenv('GITHUB_ACCESS_TOKEN')
 
 
 class DevelopAppConfig(AppConfig):

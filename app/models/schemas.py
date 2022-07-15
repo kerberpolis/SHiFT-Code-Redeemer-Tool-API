@@ -17,6 +17,17 @@ class UserGameFormData(BaseModel):
     platform: str = Field(..., example="Epic")
 
 
+class FeedbackData(BaseModel):
+    title: str = Field(..., example='A bug has been found!')
+    desc: str = Field(..., example='The bug is really bad!')
+    page: str = Field(..., example='/path/to/page')
+    browser: str = Field(..., example='firefox')
+    browser_version: str = Field(..., example='88.0')
+    width: str = Field(..., example='1000')
+    height: str = Field(..., example='800')
+    os: str = Field(..., example='unix')
+
+
 class UserFormData(BaseModel):
     email: str = Field(..., example='joe_bloggs@gmail.com')
     password: str = Field(...)
