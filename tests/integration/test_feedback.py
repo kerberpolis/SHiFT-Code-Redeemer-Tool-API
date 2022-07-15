@@ -1,27 +1,6 @@
 from app.config import get_config
 
 
-def test_create_feedback_success(test_client):
-    # arrange
-    data = {
-        "title": "A bug has been found!",
-        "desc": "The bug is really bad!",
-        "page": "/path/to/page",
-        "browser": "firefox",
-        "browser_version": "88.0",
-        "width": "1000",
-        "height": "800",
-        "os": "unix"
-    }
-
-    # act
-    response = test_client.post(f'{get_config().BASE_PATH}/feedback', json=data)
-
-    # assert
-    assert response.status_code == 200
-    assert response.json() is True
-
-
 def test_create_feedback_bad_request_data(test_client):
     # arrange
     missing = ["desc", "page", "browser", "browser_version", "width", "height", "os"]
