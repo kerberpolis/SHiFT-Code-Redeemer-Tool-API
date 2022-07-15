@@ -20,7 +20,7 @@ router = APIRouter()
 def post_feedback(feedbackData: FeedbackData, config: AppConfig = Depends(get_config)):
     body = f"New feedback reported using the website interface.\n\n" \
             f"* **Reported**: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n" \
-            f"* **Page**: {feedbackData.page}" \
+            f"* **Page**: {feedbackData.page}\n" \
             f"* **Browser**: {feedbackData.browser}, " \
             f"version {feedbackData.browser_version}\n" \
             f"* **OS**: {feedbackData.os}\n" \
