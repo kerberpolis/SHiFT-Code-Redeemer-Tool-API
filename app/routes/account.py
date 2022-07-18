@@ -7,8 +7,7 @@ from app.models.schemas import GearboxFormData, UserFormData, ErrorResponse
 from app.borderlands_crawler import BorderlandsCrawler
 from app.util import encrypt
 
-database = "borderlands_codes.db"
-db_conn = database_controller.create_connection(database)
+db_conn = database_controller.create_connection()
 
 
 router = APIRouter()

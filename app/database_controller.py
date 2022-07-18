@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Error, Connection
 
 
-def create_connection(db_file):
+def create_connection(db_file='borderlands_codes.db'):
     """ create a database connection to a SQLite database """
     conn = None
     try:
