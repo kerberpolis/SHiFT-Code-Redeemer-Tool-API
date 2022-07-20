@@ -9,8 +9,7 @@ from app.errors import InvalidParameterError
 from app.models.queries import code_query
 from app.models.schemas import Code, CodeResponse, ErrorResponse
 
-database = "borderlands_codes.db"
-db_conn = database_controller.create_connection(database)
+db_conn = database_controller.create_connection()
 
 PARAM_FILTERS = dict(
     code="AND CODE = :code",

@@ -12,3 +12,4 @@ tweepy
 python-jose[cryptography]
 mangum
 PyGithub
+webdriver-manager

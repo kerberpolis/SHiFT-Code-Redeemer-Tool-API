@@ -8,8 +8,7 @@ from app.config import get_config
 from app.models.queries import user_id_path
 from app.models.schemas import Code, CodeResponse, ErrorResponse
 
-database = "borderlands_codes.db"
-db_conn = database_controller.create_connection(database)
+db_conn = database_controller.create_connection()
 
 router = APIRouter()
 

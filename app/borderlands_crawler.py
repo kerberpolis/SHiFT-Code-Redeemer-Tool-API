@@ -2,14 +2,15 @@ import logging
 import time
 from fake_useragent import UserAgent, FakeUserAgentError
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException
+from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException, WebDriverException
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from app.util import decrypt
 from app.config import get_config, AppConfig
+from webdriver_manager.firefox import GeckoDriverManager
 
 
-class BorderlandsCrawler(object):
+class BorderlandsCrawler:
     name = "borderlands_spider"
     start_url = 'https://google.com'
     GEARBOX_URL = 'https://shift.gearboxsoftware.com/home'
@@ -41,10 +42,14 @@ class BorderlandsCrawler(object):
         except FakeUserAgentError:
             pass
 
-        self.driver = webdriver.Firefox(firefox_binary=binary, firefox_options=self.options,
-                                        executable_path='/usr/local/share/gecko_driver/geckodriver')
-        self.driver.set_window_size(1500, 1000)
-        self.driver.get(self.start_url)
+        try:
+            self.driver = webdriver.Firefox(firefox_binary=binary, firefox_options=self.options,
+                                            executable_path=GeckoDriverManager(version="v0.30.0").install())
+            self.driver.set_window_size(1500, 1000)
+            self.driver.get(self.start_url)
+        except WebDriverException as e:
+            logging.error(e)
+            raise
 
     def click(self, xpath: str) -> bool:
         try:

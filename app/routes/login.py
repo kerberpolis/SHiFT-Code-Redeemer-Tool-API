@@ -14,8 +14,7 @@ from app.models.schemas import ErrorResponse
 from app.models.schemas import Token, User
 from app.util import decrypt
 
-database = "borderlands_codes.db"
-db_conn = database_controller.create_connection(database)
+db_conn = database_controller.create_connection()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 SECRET_KEY = "super_secret"
