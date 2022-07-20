@@ -25,7 +25,7 @@ class AppConfig:
             'TWITTER_ACCESS_TOKEN',
             'TWITTER_ACCESS_TOKEN_SECRET',
             'BORDERLANDS_ENCRYPTION_KEY',
-            '_GITHUB_ACCESS_TOKEN'
+            'GITHUB_ACCESS_TOKEN'
         ]
         for env_var in env_vars:
             if env_var not in os.environ:
@@ -44,7 +44,7 @@ class AppConfig:
         self.ENCRYPTION_KEY = os.getenv('BORDERLANDS_ENCRYPTION_KEY')
 
         # Github Token
-        self.GITHUB_ACCESS_TOKEN = os.getenv('_GITHUB_ACCESS_TOKEN')
+        self.GITHUB_ACCESS_TOKEN = os.getenv('GITHUB_ACCESS_TOKEN')
 
 
 class DevelopAppConfig(AppConfig):

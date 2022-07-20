@@ -3,9 +3,8 @@ name: FastAPI AWS CI/CD production
 on:
   # Trigger the workflow on push
   push:
-    branches: 
-      # Push events on main branch
-      - master 
+    branches:
+      - master
 
 # The Job defines a series of steps that execute on the same runner.
 jobs:
@@ -71,6 +70,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: copy develop docker-compose file
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "~/"
+
       - name: build and push docker image
         env:
           REPO: borderlands-fastapi
@@ -91,4 +99,4 @@ jobs:
             docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
             docker stop borderlands-fastapi
             docker rm borderlands-fastapi
-            docker run -it --rm --name borderlands-fastapi -v ~/borderlands_codes.db:/app/borderlands_codes.db --env-file ~/borderlands_codes_envs -dp 8080:8080 ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
+            docker-compose --env-file .env -f docker-compose.prod.yml up -d

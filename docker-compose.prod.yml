@@ -2,8 +2,8 @@ version: '3.1'
 
 services:
   api:
-    image: ${ECR_IMAGE}:dev
-    container_name: borderlands-fastapi-dev
+    image: ${ECR_IMAGE}:latest
+    container_name: borderlands-fastapi
     environment:
       - BORDERLANDS_ENCRYPTION_KEY=${BORDERLANDS_ENCRYPTION_KEY}
       - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
@@ -15,4 +15,4 @@ services:
       - "./borderlands_codes.db:/app/borderlands_codes.db"
     restart: unless-stopped
     ports:
-      - 8081:8000
+      - 8080:8000
