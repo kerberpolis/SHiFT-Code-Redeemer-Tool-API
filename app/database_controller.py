@@ -1,9 +1,15 @@
+import os
 import logging
 import sqlite3
 from sqlite3 import Error, Connection
 
+PATH = os.path.realpath(os.path.dirname(__file__))
+print(PATH)
+DB_PATH = os.path.join(PATH, '../borderlands_codes.db')
+print(DB_PATH)
 
-def create_connection(db_file='borderlands_codes.db'):
+
+def create_connection(db_file=DB_PATH):
     """ create a database connection to a SQLite database """
     conn = None
     try:

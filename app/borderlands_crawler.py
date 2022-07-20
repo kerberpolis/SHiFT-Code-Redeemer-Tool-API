@@ -9,7 +9,8 @@ from app.util import decrypt
 from app.config import get_config, AppConfig
 from webdriver_manager.firefox import GeckoDriverManager
 
-class BorderlandsCrawler(object):
+
+class BorderlandsCrawler:
     name = "borderlands_spider"
     start_url = 'https://google.com'
     GEARBOX_URL = 'https://shift.gearboxsoftware.com/home'
