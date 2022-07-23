@@ -1,8 +1,10 @@
 import logging
+
 from fastapi import APIRouter, Request, Depends
 from fastapi.exceptions import HTTPException
 from app import database_controller
 from app.config import get_config, AppConfig
+<<<<<<< HEAD
 from app.models.schemas import GearboxFormData, UserFormData, ErrorResponse
 from app.models.queries import token_query
 from app.borderlands_crawler import BorderlandsCrawler
@@ -25,6 +27,11 @@ conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
+=======
+from app.models.schemas import GearboxFormData, UserFormData, ErrorResponse, RegisterFormData, User
+from app.borderlands_crawler import BorderlandsCrawler
+from app.util import encrypt, decrypt
+>>>>>>> add endpoint to update user in PATCH request with optional data.
 
 db_conn = database_controller.create_connection()
 
@@ -41,7 +48,8 @@ router = APIRouter()
 )
 def verify_gearbox(request: Request, gearboxData: GearboxFormData, config: AppConfig = Depends(get_config)):
     if gearboxData.gearbox_password:
-        gearboxData.gearbox_password = encrypt(gearboxData.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
+        gearboxData.gearbox_password = encrypt(gearboxData.gearbox_password.encode(),
+                                               config.ENCRYPTION_KEY.encode()).decode()
     else:
         raise Exception(f"User {gearboxData.gearbox_email} details could not be parsed.")
 
@@ -160,3 +168,97 @@ async def confirm_email(request: Request, token: str = token_query):
             raise Exception('Error occured during verification.')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch(
+    get_config().BASE_PATH + '/user/{user_id}',
+    tags=["account"],
+    responses={
+        422: {"model": ErrorResponse},
+    }
+)
+def update_user(request: Request, formData: UserFormData, user_id: int, config: AppConfig = Depends(get_config)):
+    # Encrypt data
+    try:
+        if formData.password:
+            formData.password = encrypt(formData.password.encode(), config.ENCRYPTION_KEY.encode())
+        if formData.gearbox_password:
+            formData.gearbox_password = encrypt(formData.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
+    except Exception as e:
+        logging.error(e)
+        raise HTTPException(status_code=500, detail="Parsing form data error")
+
+    # Query database
+    try:
+        request_params = formData.dict(exclude_unset=True)
+        query_database(request_params, user_id)
+
+        # Query database for new user
+        rows = database_controller.select_user_by_id(db_conn, user_id)
+    except Exception as e:
+        logging.error(e)
+        raise HTTPException(status_code=500, detail="Database error")
+
+    try:
+        data = parse_results(rows)
+        if data.password:
+            data.password = decrypt(data.password.encode(), config.ENCRYPTION_KEY.encode()).decode()
+
+    except Exception as e:  # noqa
+        logging.error(e)
+        raise HTTPException(status_code=500, detail="Parsing error")
+
+    return data
+
+
+def prepare_update_user_query(params: list, user_id: int) -> str:
+    PARAM_FILTERS = dict(
+        email="email = :email",
+        password="password = :password",
+        gearbox_email="gearbox_email = :gearbox_email",
+        gearbox_password="gearbox_password = :gearbox_password"
+    )
+
+    filters = {}
+    for filter_name in PARAM_FILTERS:
+        if filter_name in params:
+            filters[filter_name] = PARAM_FILTERS[filter_name]
+        else:
+            filters[filter_name] = ''
+
+    template = """UPDATE user SET
+                    {email}
+                    {password}
+                    {gearbox_email}
+                    {gearbox_password}
+                    WHERE _id = {user_id}
+    """
+
+    return template.format(user_id=user_id,
+                           **filters)
+
+
+def query_database(request_params, user_id):
+    """Query database and return rows."""
+    sql = prepare_update_user_query(request_params.keys(), user_id)
+    rows = database_controller.execute_sql(db_conn, sql=sql, params=request_params)
+
+    return rows
+
+
+def parse_results(row):
+    """Parse row into User schema"""
+    return User(**dict(row))
+
+
+if __name__ == '__main__':
+    config = get_config()
+
+    conn = database_controller.create_connection()
+    user = User(**database_controller.select_user_by_id(conn, 18))
+
+    password = decrypt(user.password.encode(), config.ENCRYPTION_KEY.encode())
+    gearbox_password = decrypt(user.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
+
+    print('Gearbox pw: ', gearbox_password.decode())
+    print('Password: ', password.decode())

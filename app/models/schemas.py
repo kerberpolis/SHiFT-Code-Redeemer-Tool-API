@@ -28,10 +28,17 @@ class FeedbackData(BaseModel):
     os: str = Field(..., example='unix')
 
 
-class UserFormData(BaseModel):
+class RegisterFormData(BaseModel):
     email: str = Field(..., example='joe_bloggs@gmail.com')
     password: str = Field(...)
     gearbox_email: str = Field(None, example='joe_bloggs_gearbox@gmail.com')
+    gearbox_password: str = Field(None)
+
+
+class UserFormData(BaseModel):
+    email: str = Field(None, example='changed@gmail.com')
+    password: str = Field(None)
+    gearbox_email: str = Field(None)
     gearbox_password: str = Field(None)
 
 
