@@ -145,11 +145,18 @@ async def confirm_email(request: Request, token: str = token_query):
             user = database_controller.select_user_by_email(db_conn, uc['email'])  # make sure user exists
 
             if user:
-                database_controller.verify_user(db_conn, user['_id'])  # set user to be verified.
-                # remove any rows from user_confirmation taale with email (multiple verification emails sent)
-                database_controller.delete_user_confimation_by_email(db_conn,
-                                                                     user['email'])
+                try:
+                    database_controller.verify_user(db_conn, user['_id'])  # set user to be verified.
+                    # remove any rows from user_confirmation taale with email (multiple verification emails sent)
+                    database_controller.delete_user_confimation_by_email(db_conn,
+                                                                        user['email'])
+                except Exception:
+                    raise Exception('Error verifying user.')
 
                 return user['email']
-    except Exception:
-        raise HTTPException(status_code=500, detail='Error verifying user.')
+            else:
+                raise Exception("Error fetching user information.")
+        else:
+            raise Exception('Error occured during verification.')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
