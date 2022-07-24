@@ -13,3 +13,4 @@ python-multipart
 PyGithub
 webdriver-manager
 fastapi-mail
+passlib

@@ -14,3 +14,4 @@ mangum
 PyGithub
 webdriver-manager
 fastapi-mail
+passlib
