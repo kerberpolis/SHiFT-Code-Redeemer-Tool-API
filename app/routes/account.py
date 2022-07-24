@@ -91,7 +91,6 @@ async def register(request: Request, formData: UserFormData, config: AppConfig =
 
 
 async def request_email_confirmation(email: str) -> None:
-
     token = hashlib.sha256(genword(length=256).encode()).hexdigest()
     uuid = generate_uuid()
 
@@ -117,9 +116,9 @@ async def send_confirmation_email(email: str, token: str) -> None:
     message = MessageSchema(
         subject=subject,
         recipients=[email],
-        body=msg,
-        subtype="html"
+        html=msg
     )
+
     fm = FastMail(conf)
     await fm.send_message(message)
 
