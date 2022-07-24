@@ -17,6 +17,7 @@ class AppConfig:
     OPENAPI_URL = BASE_PATH + "/openapi.json"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
     GITHUB_ACCESS_TOKEN = None
+    GMAIL_APP_PW = None
 
     def __init__(self):
         env_vars = [
@@ -25,7 +26,8 @@ class AppConfig:
             'TWITTER_ACCESS_TOKEN',
             'TWITTER_ACCESS_TOKEN_SECRET',
             'BORDERLANDS_ENCRYPTION_KEY',
-            'GITHUB_ACCESS_TOKEN'
+            'GITHUB_ACCESS_TOKEN',
+            'GMAIL_APP_PW'
         ]
         for env_var in env_vars:
             if env_var not in os.environ:
@@ -45,6 +47,9 @@ class AppConfig:
 
         # Github Token
         self.GITHUB_ACCESS_TOKEN = os.getenv('GITHUB_ACCESS_TOKEN')
+
+        # Gmail application password for FastMail
+        self.GMAIL_APP_PW = os.getenv('GMAIL_APP_PW')
 
 
 class DevelopAppConfig(AppConfig):
