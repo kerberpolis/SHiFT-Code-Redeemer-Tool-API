@@ -50,6 +50,7 @@ class AppConfig:
 class DevelopAppConfig(AppConfig):
     env_name = "DEVELOP"
     logging_level = logging.DEBUG
+    SITE_URL = 'http://localhost:8100'
 
     def __init__(self):
         super().__init__()
@@ -58,6 +59,7 @@ class DevelopAppConfig(AppConfig):
 class ProductionAppConfig(AppConfig):
     env_name = "PRODUCTION"
     logging_level = logging.INFO
+    SITE_URL = 'http://shift-code-tool-production.s3-website.eu-west-2.amazonaws.com/'
 
     def __init__(self):
         super().__init__()

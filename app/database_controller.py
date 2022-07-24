@@ -37,7 +37,19 @@ def create_user_table(conn: Connection):
                 gearbox_email TEXT UNIQUE,
                 gearbox_password TEXT,
                 notify_launch_game INTEGER CHECK(notify_launch_game IN (0, 1)) NOT NULL DEFAULT 0,
+                verified INTEGER CHECK(verified IN (0, 1)) NOT NULL DEFAULT 0,
                 UNIQUE(email, gearbox_email)
+            )"""
+
+    create_table(conn, sql)
+
+
+def create_user_confirmation_table(conn: Connection):
+    sql = """CREATE TABLE IF NOT EXISTS user_confirmation(
+                _id TEXT PRIMARY KEY NOT NULL,
+                email TEXT NOT NULL,
+                token TEXT NOT NULL,
+                UNIQUE(email, token)
             )"""
 
     create_table(conn, sql)
@@ -378,6 +390,65 @@ def delete_user_game(conn: Connection, user_game_id: int):
     cur = conn.cursor()
     try:
         cur.execute('DELETE FROM user_game WHERE _id=?', (user_game_id,))
+        conn.commit()
+        cur.close()
+    except Exception as e:
+        print(e)
+        return False
+
+    return True
+
+
+def create_user_confirmation(conn: Connection, uuid: str, email: str, token: str):
+    """
+    A user confirmation email is sent via email to a user who has signed up.
+    A token is created and used for confirming by clicking an email link.
+
+    :param conn: db connection
+    :param email: The email of the user to verify.
+    :param token: The unique token used to verify the user.
+    :return: the id of the last row created.
+    """
+    cur = conn.cursor()
+    sql = '''INSERT INTO user_confirmation(_id, email, token)
+                    VALUES(:id, :email, :token)'''
+
+    try:
+        with conn:
+            cur.execute(sql, (uuid, email, token,))
+        conn.commit()
+        cur.close()
+    except sqlite3.IntegrityError as e:
+        # cannot add due to unique constraint
+        print(e)
+        pass
+    except sqlite3.DatabaseError as e:
+        print(f'Database Error: {str(e)}')
+        conn.rollback()
+    except Exception as e:
+        print(f'Error: {str(e)}')
+        conn.rollback()
+
+    return cur.lastrowid
+
+
+def get_email_confirmation_by_token(conn: Connection, token: str):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM user_confirmation WHERE token=?', (token,))
+    return cur.fetchone()
+
+
+def verify_user(conn: Connection, user_id: int):
+    cur = conn.cursor()
+    with conn:
+        cur.execute('UPDATE user SET verified = 1 WHERE _id=?', (user_id,))
+    cur.close()
+
+
+def delete_user_confimation_by_email(conn: Connection, email: str):
+    cur = conn.cursor()
+    try:
+        cur.execute('DELETE FROM user_confirmation WHERE email=?', (email,))
         conn.commit()
         cur.close()
     except Exception as e:

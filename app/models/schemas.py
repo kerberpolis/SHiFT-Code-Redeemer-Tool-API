@@ -70,6 +70,7 @@ class User(BaseModel):
     gearbox_email: str = Field(None, example='joe_bloggs@gmail.com')
     gearbox_password: str = Field(None)
     notify_launch_game: int = Field(..., example=0)
+    verified: int = Field(..., example=1)
 
 
 class ErrorDetails(BaseModel):

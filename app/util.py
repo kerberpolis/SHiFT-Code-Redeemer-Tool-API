@@ -1,6 +1,6 @@
 """File containing common functions"""
 from datetime import datetime
-
+from uuid import uuid4
 import pytz
 from cryptography.fernet import Fernet
 
@@ -51,3 +51,7 @@ def encrypt(data: bytes, key: bytes) -> bytes:
 
 def decrypt(token: bytes, key: bytes) -> bytes:
     return Fernet(key).decrypt(token)
+
+
+def generate_uuid():
+    return uuid4().hex
