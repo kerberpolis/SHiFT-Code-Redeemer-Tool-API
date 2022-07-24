@@ -69,17 +69,17 @@ def verify_gearbox(request: Request, gearboxData: GearboxFormData, config: AppCo
 async def register(request: Request, formData: UserFormData, config: AppConfig = Depends(get_config)):
     # Query database
     try:
-        # if formData.password:
-        #     formData.password = encrypt(formData.password.encode(), config.ENCRYPTION_KEY.encode())
-        # if formData.gearbox_password:
-        #     formData.gearbox_password = encrypt(formData.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
+        if formData.password:
+            formData.password = encrypt(formData.password.encode(), config.ENCRYPTION_KEY.encode())
+        if formData.gearbox_password:
+            formData.gearbox_password = encrypt(formData.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
 
-        # if not formData.password and not formData.gearbox_password:
-        #     raise Exception(f"User {formData.email} details could not be parsed.")
+        if not formData.password and not formData.gearbox_password:
+            raise Exception(f"User {formData.email} details could not be parsed.")
 
-        # user_id = database_controller.create_user(db_conn, formData.dict())
-        # if not user_id:
-        #     raise Exception(f"Could not create user {formData.email}")
+        user_id = database_controller.create_user(db_conn, formData.dict())
+        if not user_id:
+            raise Exception(f"Could not create user {formData.email}")
 
         await request_email_confirmation(formData.email)
 
@@ -87,7 +87,7 @@ async def register(request: Request, formData: UserFormData, config: AppConfig =
         logging.error(e)
         raise HTTPException(status_code=500, detail='Error')
 
-    # return user_id
+    return user_id
 
 
 async def request_email_confirmation(email: str) -> None:
@@ -99,7 +99,7 @@ async def request_email_confirmation(email: str) -> None:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return await send_confirmation_email(email, token)
+    await send_confirmation_email(email, token)
 
 
 async def send_confirmation_email(email: str, token: str) -> None:
@@ -119,6 +119,7 @@ async def send_confirmation_email(email: str, token: str) -> None:
         html=msg
     )
 
+    print('Sending verification mail')
     fm = FastMail(conf)
     await fm.send_message(message)
 
@@ -148,7 +149,7 @@ async def confirm_email(request: Request, token: str = token_query):
                 # remove any rows from user_confirmation taale with email (multiple verification emails sent)
                 database_controller.delete_user_confimation_by_email(db_conn,
                                                                      user['email'])
+
+                return user['email']
     except Exception:
         raise HTTPException(status_code=500, detail='Error verifying user.')
-
-    return user['email']
