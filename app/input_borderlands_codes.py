@@ -125,7 +125,7 @@ def start_crawlers(conn: Connection):
             print(f'User {user[1]} cannot enter shift codes until they launch a Borderlands title.'
                   f' Sending notification email.')
 
-        user_games = parse_user_games(database_controller.get_user_games(conn, user[0]))
+        user_games = parse_user_games(database_controller.select_user_game_by_id(conn, user[0]))
         thread = threading.Thread(target=input_borderlands_codes,
                                   name=f"borderlands_input_{user[0]}",
                                   args=(conn, user, user_games))

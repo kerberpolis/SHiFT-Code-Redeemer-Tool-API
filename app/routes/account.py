@@ -246,14 +246,42 @@ def parse_results(row):
     return User(**dict(row))
 
 
+
+from sqlite3 import Error, Connection
+from app.models.schemas import UserGame
+
+def update_id(conn: Connection, uuid: str, user_id: str):
+    cur = conn.cursor()
+    # import ipdb; ipdb.set_trace()
+    with conn:
+        cur.execute('UPDATE user_game SET _id=? WHERE _id=?', (uuid, str(user_id),))
+    cur.close()
+
+def get_user_games(conn: Connection):
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM old_user_game')
+    return cur.fetchall()
+
+
 if __name__ == '__main__':
     config = get_config()
 
     conn = database_controller.create_connection()
-    user = User(**database_controller.select_user_by_id(conn, 18))
 
-    password = decrypt(user.password.encode(), config.ENCRYPTION_KEY.encode())
-    gearbox_password = decrypt(user.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
 
-    print('Gearbox pw: ', gearbox_password.decode())
-    print('Password: ', password.decode())
+    rows = get_user_games(conn)
+    user_games = [UserGame(**row) for row in rows]
+
+    for user_game in user_games:
+        uuid = generate_uuid()
+        print(user_game)
+        row_id = database_controller.create_user_game(conn, uuid=str(uuid), game=user_game.game, platform=user_game.platform, user_id=int(user_game.user_id))
+        print(row_id)
+
+
+    # update_id(conn, uuid, user_id)
+    # password = decrypt(user.password.encode(), config.ENCRYPTION_KEY.encode())
+    # gearbox_password = decrypt(user.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
+
+    # print('Gearbox pw: ', gearbox_password.decode())
+    # print('Password: ', password.decode())

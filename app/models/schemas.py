@@ -55,7 +55,7 @@ class Code(BaseModel):
 
 
 class UserGame(BaseModel):
-    id: int = Field(..., example=1, alias="_id")
+    id: str = Field(..., example=1, alias="_id")
     game: str = Field(..., example='Wonderlands')
     platform: str = Field(..., example='Universal')
     user_id: int = Field(..., example=1)

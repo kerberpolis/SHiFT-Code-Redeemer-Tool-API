@@ -7,6 +7,7 @@ from app import database_controller
 from app.config import get_config
 from app.models.queries import user_id_path, user_game_id_path
 from app.models.schemas import UserGame, UserGameResponse, ErrorResponse, UserGameFormData
+from app.util import generate_uuid
 
 db_conn = database_controller.create_connection()
 
@@ -57,7 +58,8 @@ def get_user_games(request: Request, user_id: int = user_id_path):
 def create_user_game(form_data: UserGameFormData):
     # Query database
     try:
-        row_id = database_controller.create_user_game(db_conn, user_id=form_data.user_id,
+        uuid = generate_uuid()
+        row_id = database_controller.create_user_game(db_conn, uuid=uuid, user_id=form_data.user_id,
                                                       game=form_data.game, platform=form_data.platform)
     except Exception as e:
         logging.error(e)
@@ -79,7 +81,7 @@ def create_user_game(form_data: UserGameFormData):
         422: {"model": ErrorResponse},
     }
 )
-def delete_user_game(user_game_id: int = user_game_id_path):
+def delete_user_game(user_game_id: str = user_game_id_path):
     # Query database
     try:
         database_controller.delete_user_game(db_conn, user_game_id=user_game_id)
