@@ -99,4 +99,4 @@ jobs:
             docker pull ${{ secrets.AWS_BORDERLANDS_ECR }}:latest
             docker stop borderlands-fastapi
             docker rm borderlands-fastapi
-            docker-compose --env-file .env -f docker-compose.prod.yml up -d
+            docker-compose --env-file .env -f docker-compose.prod.yml up --build -d

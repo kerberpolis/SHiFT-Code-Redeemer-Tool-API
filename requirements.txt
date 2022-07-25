@@ -13,3 +13,5 @@ python-jose[cryptography]
 mangum
 PyGithub
 webdriver-manager
+fastapi-mail
+passlib

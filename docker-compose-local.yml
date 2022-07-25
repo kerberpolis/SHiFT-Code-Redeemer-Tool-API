@@ -11,6 +11,7 @@ services:
       - TWITTER_ACCESS_TOKEN_SECRET=${TWITTER_ACCESS_TOKEN_SECRET}
       - TWITTER_CONSUMER_KEY=${TWITTER_CONSUMER_KEY}
       - TWITTER_CONSUMER_SECRET=${TWITTER_CONSUMER_SECRET}
+      - GMAIL_APP_PW=${GMAIL_APP_PW}
     volumes:
       - "./borderlands_codes.db:/app/borderlands_codes.db"
     restart: unless-stopped

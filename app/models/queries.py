@@ -13,6 +13,12 @@ code_query = Query(
     example='BBF33-TFFWZ-KC3KW-3JJJJ-WCXZR'
 )
 
+token_query = Query(
+    ...,
+    title='Token',
+    description='Token used to confirm user when registering.',
+)
+
 
 user_id_path = Path(
     ...,
