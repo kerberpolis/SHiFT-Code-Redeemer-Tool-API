@@ -258,7 +258,7 @@ def select_user_by_gearbox_email(conn: Connection, gearbox_email: str):
     return cur.fetchone()
 
 
-def select_user_by_id(conn: Connection, user_id: int):
+def select_user_by_id(conn: Connection, user_id: str):
     cur = conn.cursor()
     cur.execute("SELECT * FROM user WHERE _id=?", (user_id, ))
     return cur.fetchone()
