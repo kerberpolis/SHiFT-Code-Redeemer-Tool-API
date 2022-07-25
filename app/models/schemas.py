@@ -12,7 +12,7 @@ class GearboxFormData(BaseModel):
 
 
 class UserGameFormData(BaseModel):
-    user_id: int = Field(..., example=1)
+    user_id: str = Field(..., example=1)
     game: str = Field(..., example="Borderlands 3")
     platform: str = Field(..., example="Epic")
 
@@ -58,20 +58,20 @@ class UserGame(BaseModel):
     id: str = Field(..., example=1, alias="_id")
     game: str = Field(..., example='Wonderlands')
     platform: str = Field(..., example='Universal')
-    user_id: int = Field(..., example=1)
+    user_id: str = Field(..., example=1)
 
 
 class UserCode(BaseModel):
     _id: int = Field(..., example=1)
     game: str = Field(..., example='Wonderlands')
     platform: str = Field(..., example='Universal')
-    user_id: int = Field(..., example=1)
+    user_id: str = Field(..., example=1)
     code_id: int = Field(..., example=110)
     is_redeem_success: int = Field(..., example=1)
 
 
 class User(BaseModel):
-    id: int = Field(..., example=1, alias="_id")
+    id: str = Field(..., example=1, alias="_id")
     email: str = Field(..., example='joe_bloggs@gmail.com')
     password: str = Field(...)
     gearbox_email: str = Field(None, example='joe_bloggs@gmail.com')

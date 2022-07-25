@@ -31,7 +31,7 @@ def execute_sql(conn: Connection, sql: str, params: dict = None):
 
 def create_user_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user(
-                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                _id TEXT PRIMARY KEY NOT NULL,
                 email TEXT NOT NULL UNIQUE,
                 password TEXT NOT NULL,
                 gearbox_email TEXT UNIQUE,
@@ -77,7 +77,7 @@ def create_user_game_table(conn: Connection):
                 _id TEXT PRIMARY KEY NOT NULL,
                 game TEXT NOT NULL,
                 platform TEXT NOT NULL,
-                user_id INTEGER NOT NULL,
+                user_id TEXT NOT NULL,
                 UNIQUE(game, platform, user_id),
                 FOREIGN KEY (user_id) REFERENCES user (_id)
             )"""
@@ -89,7 +89,7 @@ def create_user_code_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user_code(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 code_id INTEGER NOT NULL,
-                user_id INTEGER NOT NULL,
+                user_id TEXT NOT NULL,
                 game TEXT,
                 platform TEXT,
                 is_redeem_success INTEGER NOT NULL,
@@ -201,8 +201,8 @@ def select_code_by_id(conn: Connection, code_id: int):
 
 
 def create_user(conn: Connection, user_data: dict):
-    sql = '''INSERT INTO user(email, password, gearbox_email, gearbox_password)
-                 VALUES(:email, :password, :gearbox_email, :gearbox_password)'''
+    sql = '''INSERT INTO user(_id, email, password, gearbox_email, gearbox_password)
+                 VALUES(:uuid, :email, :password, :gearbox_email, :gearbox_password)'''
     cur = conn.cursor()
 
     try:

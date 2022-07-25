@@ -22,7 +22,7 @@ router = APIRouter()
         422: {"model": ErrorResponse},
     }
 )
-def get_user_games(request: Request, user_id: int = user_id_path):
+def get_user_games(request: Request, user_id: str = user_id_path):
     # Query database
     try:
         sql = prepare_get_user_games()
@@ -96,7 +96,7 @@ def prepare_get_user_games():
     return """SELECT _id, game, platform, user_id FROM user_game WHERE user_id = :user_id"""
 
 
-def query_database(sql: str, user_id: int):
+def query_database(sql: str, user_id: str):
     """Query database and return rows."""
     return database_controller.execute_sql(db_conn, sql, params={'user_id': user_id})
 

@@ -80,7 +80,12 @@ async def register(request: Request, formData: UserFormData, config: AppConfig =
         if not formData.password and not formData.gearbox_password:
             raise Exception(f"User {formData.email} details could not be parsed.")
 
-        user_id = database_controller.create_user(db_conn, formData.dict())
+        uuid = generate_uuid()
+        user_data = {
+            'uuid': uuid,
+            **formData.dict()
+        }
+        user_id = database_controller.create_user(db_conn, user_data=user_data)
         if not user_id:
             raise Exception(f"Could not create user {formData.email}")
 
@@ -244,44 +249,3 @@ def query_database(request_params, user_id):
 def parse_results(row):
     """Parse row into User schema"""
     return User(**dict(row))
-
-
-
-from sqlite3 import Error, Connection
-from app.models.schemas import UserGame
-
-def update_id(conn: Connection, uuid: str, user_id: str):
-    cur = conn.cursor()
-    # import ipdb; ipdb.set_trace()
-    with conn:
-        cur.execute('UPDATE user_game SET _id=? WHERE _id=?', (uuid, str(user_id),))
-    cur.close()
-
-def get_user_games(conn: Connection):
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM old_user_game')
-    return cur.fetchall()
-
-
-if __name__ == '__main__':
-    config = get_config()
-
-    conn = database_controller.create_connection()
-
-
-    rows = get_user_games(conn)
-    user_games = [UserGame(**row) for row in rows]
-
-    for user_game in user_games:
-        uuid = generate_uuid()
-        print(user_game)
-        row_id = database_controller.create_user_game(conn, uuid=str(uuid), game=user_game.game, platform=user_game.platform, user_id=int(user_game.user_id))
-        print(row_id)
-
-
-    # update_id(conn, uuid, user_id)
-    # password = decrypt(user.password.encode(), config.ENCRYPTION_KEY.encode())
-    # gearbox_password = decrypt(user.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
-
-    # print('Gearbox pw: ', gearbox_password.decode())
-    # print('Password: ', password.decode())
