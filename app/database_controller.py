@@ -31,7 +31,7 @@ def execute_sql(conn: Connection, sql: str, params: dict = None):
 
 def create_user_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user(
-                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                _id TEXT PRIMARY KEY NOT NULL,
                 email TEXT NOT NULL UNIQUE,
                 password TEXT NOT NULL,
                 gearbox_email TEXT UNIQUE,
@@ -74,10 +74,10 @@ def create_code_table(conn: Connection):
 
 def create_user_game_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user_game(
-                _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                _id TEXT PRIMARY KEY NOT NULL,
                 game TEXT NOT NULL,
                 platform TEXT NOT NULL,
-                user_id INTEGER NOT NULL,
+                user_id TEXT NOT NULL,
                 UNIQUE(game, platform, user_id),
                 FOREIGN KEY (user_id) REFERENCES user (_id)
             )"""
@@ -89,7 +89,7 @@ def create_user_code_table(conn: Connection):
     sql = """CREATE TABLE IF NOT EXISTS user_code(
                 _id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 code_id INTEGER NOT NULL,
-                user_id INTEGER NOT NULL,
+                user_id TEXT NOT NULL,
                 game TEXT,
                 platform TEXT,
                 is_redeem_success INTEGER NOT NULL,
@@ -201,8 +201,8 @@ def select_code_by_id(conn: Connection, code_id: int):
 
 
 def create_user(conn: Connection, user_data: dict):
-    sql = '''INSERT INTO user(email, password, gearbox_email, gearbox_password)
-                 VALUES(:email, :password, :gearbox_email, :gearbox_password)'''
+    sql = '''INSERT INTO user(_id, email, password, gearbox_email, gearbox_password)
+                 VALUES(:uuid, :email, :password, :gearbox_email, :gearbox_password)'''
     cur = conn.cursor()
 
     try:
@@ -219,7 +219,7 @@ def create_user(conn: Connection, user_data: dict):
         print(f'Error: {str(e)}')
         conn.rollback()
 
-    return cur.lastrowid
+    return user_data['uuid']
 
 
 def select_all_codes(conn: Connection):
@@ -258,7 +258,7 @@ def select_user_by_gearbox_email(conn: Connection, gearbox_email: str):
     return cur.fetchone()
 
 
-def select_user_by_id(conn: Connection, user_id: int):
+def select_user_by_id(conn: Connection, user_id: str):
     cur = conn.cursor()
     cur.execute("SELECT * FROM user WHERE _id=?", (user_id, ))
     return cur.fetchone()
@@ -350,7 +350,7 @@ def set_notify_launch_game(conn: Connection, launch_bool: int, user_id: int) -> 
     cur.close()
 
 
-def create_user_game(conn: Connection, game: str, platform: str, user_id: int):
+def create_user_game(conn: Connection, uuid: str, game: str, platform: str, user_id: int):
     """
     A user can set preference for what platform a shift code enabled game can be redeemed for.
 
@@ -360,13 +360,13 @@ def create_user_game(conn: Connection, game: str, platform: str, user_id: int):
     :param user_id: id of the user using the code.
     :return: the id of the last row created.
     """
-    sql = '''INSERT INTO user_game(game, platform, user_id)
-                     VALUES(:game, :platform, :user_id)'''
+    sql = '''INSERT INTO user_game(_id, game, platform, user_id)
+                     VALUES(:uuid,  :game, :platform, :user_id)'''
     cur = conn.cursor()
 
     try:
         with conn:
-            cur.execute(sql, (game, platform, user_id,))
+            cur.execute(sql, (uuid, game, platform, user_id,))
         conn.commit()
     except sqlite3.IntegrityError as e:
         print(f'User {user_id} has game {game} preference set to {platform} already. Error: {str(e)}')
@@ -380,13 +380,13 @@ def create_user_game(conn: Connection, game: str, platform: str, user_id: int):
     return cur.lastrowid
 
 
-def get_user_games(conn: Connection, user_id: int):
+def select_user_game_by_id(conn: Connection, user_id: int):
     cur = conn.cursor()
     cur.execute('SELECT * FROM user_game WHERE user_id=?', (user_id,))
     return cur.fetchall()
 
 
-def delete_user_game(conn: Connection, user_game_id: int):
+def delete_user_game(conn: Connection, user_game_id: str):
     cur = conn.cursor()
     try:
         cur.execute('DELETE FROM user_game WHERE _id=?', (user_game_id,))
@@ -411,7 +411,7 @@ def create_user_confirmation(conn: Connection, uuid: str, email: str, token: str
     """
     cur = conn.cursor()
     sql = '''INSERT INTO user_confirmation(_id, email, token)
-                    VALUES(:id, :email, :token)'''
+                    VALUES(:uuid, :email, :token)'''
 
     try:
         with conn:

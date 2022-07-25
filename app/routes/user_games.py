@@ -7,6 +7,7 @@ from app import database_controller
 from app.config import get_config
 from app.models.queries import user_id_path, user_game_id_path
 from app.models.schemas import UserGame, UserGameResponse, ErrorResponse, UserGameFormData
+from app.util import generate_uuid
 
 db_conn = database_controller.create_connection()
 
@@ -21,7 +22,7 @@ router = APIRouter()
         422: {"model": ErrorResponse},
     }
 )
-def get_user_games(request: Request, user_id: int = user_id_path):
+def get_user_games(request: Request, user_id: str = user_id_path):
     # Query database
     try:
         sql = prepare_get_user_games()
@@ -57,7 +58,8 @@ def get_user_games(request: Request, user_id: int = user_id_path):
 def create_user_game(form_data: UserGameFormData):
     # Query database
     try:
-        row_id = database_controller.create_user_game(db_conn, user_id=form_data.user_id,
+        uuid = generate_uuid()
+        row_id = database_controller.create_user_game(db_conn, uuid=uuid, user_id=form_data.user_id,
                                                       game=form_data.game, platform=form_data.platform)
     except Exception as e:
         logging.error(e)
@@ -79,7 +81,7 @@ def create_user_game(form_data: UserGameFormData):
         422: {"model": ErrorResponse},
     }
 )
-def delete_user_game(user_game_id: int = user_game_id_path):
+def delete_user_game(user_game_id: str = user_game_id_path):
     # Query database
     try:
         database_controller.delete_user_game(db_conn, user_game_id=user_game_id)
@@ -94,7 +96,7 @@ def prepare_get_user_games():
     return """SELECT _id, game, platform, user_id FROM user_game WHERE user_id = :user_id"""
 
 
-def query_database(sql: str, user_id: int):
+def query_database(sql: str, user_id: str):
     """Query database and return rows."""
     return database_controller.execute_sql(db_conn, sql, params={'user_id': user_id})
 

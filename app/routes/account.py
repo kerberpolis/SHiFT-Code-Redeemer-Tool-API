@@ -80,7 +80,12 @@ async def register(request: Request, formData: UserFormData, config: AppConfig =
         if not formData.password and not formData.gearbox_password:
             raise Exception(f"User {formData.email} details could not be parsed.")
 
-        user_id = database_controller.create_user(db_conn, formData.dict())
+        uuid = generate_uuid()
+        user_data = {
+            'uuid': uuid,
+            **formData.dict()
+        }
+        user_id = database_controller.create_user(db_conn, user_data=user_data)
         if not user_id:
             raise Exception(f"Could not create user {formData.email}")
 
@@ -244,16 +249,3 @@ def query_database(request_params, user_id):
 def parse_results(row):
     """Parse row into User schema"""
     return User(**dict(row))
-
-
-if __name__ == '__main__':
-    config = get_config()
-
-    conn = database_controller.create_connection()
-    user = User(**database_controller.select_user_by_id(conn, 18))
-
-    password = decrypt(user.password.encode(), config.ENCRYPTION_KEY.encode())
-    gearbox_password = decrypt(user.gearbox_password.encode(), config.ENCRYPTION_KEY.encode())
-
-    print('Gearbox pw: ', gearbox_password.decode())
-    print('Password: ', password.decode())

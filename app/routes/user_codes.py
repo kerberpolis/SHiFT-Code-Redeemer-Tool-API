@@ -21,7 +21,7 @@ router = APIRouter()
         422: {"model": ErrorResponse},
     }
 )
-def get_user_codes(request: Request, user_id: int = user_id_path):
+def get_user_codes(request: Request, user_id: str = user_id_path):
     # Query database
     try:
         rows = query_database(user_id)

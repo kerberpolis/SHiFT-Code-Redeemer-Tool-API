@@ -1,9 +1,10 @@
 from app.database_controller import create_user, select_user_by_id, remove_user_by_id
-
+from app.util import generate_uuid
 
 def test_create_and_remove_user(sqlite_connection):
     # arrange
     user_data = {
+        'uuid': generate_uuid(),
         'email': 'test_email',
         'password': 'test_password',
         'gearbox_email': 'test_gearbox_email',
@@ -32,6 +33,7 @@ def test_create_and_remove_user(sqlite_connection):
 def test_create_user_with_same_gearbox_email(sqlite_connection, capsys):
     # arrange
     user_data = {
+        'uuid': generate_uuid(),
         'email': 'test_email',
         'password': 'test_password',
         'gearbox_email': 'test_gearbox_email',

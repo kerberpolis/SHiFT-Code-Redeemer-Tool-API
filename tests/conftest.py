@@ -2,6 +2,7 @@ import pytest
 from starlette.testclient import TestClient
 from app import main
 from app import database_controller
+from app.util import generate_uuid
 
 
 @pytest.fixture(scope="function")
@@ -35,18 +36,21 @@ def teardown(sqlite_connection):
 def seed_tables(sqlite_connection):
     users = [
         {
+            'uuid': generate_uuid(),
             'email': 'test_email_1',
             'password': 'test_password_1',
             'gearbox_email': 'test_gearbox_email_1',
             'gearbox_password': 'test_gearbox_password_1',
         },
         {
+            'uuid': generate_uuid(),
             'email': 'test_email_2',
             'password': 'test_password_2',
             'gearbox_email': 'test_gearbox_email_2',
             'gearbox_password': 'test_gearbox_password_2',
         },
         {
+            'uuid': generate_uuid(),
             'email': 'test_email_3',
             'password': 'test_password_3',
             'gearbox_email': 'test_gearbox_email_3',
