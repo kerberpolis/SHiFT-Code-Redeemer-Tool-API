@@ -24,7 +24,7 @@ user_id_path = Path(
     ...,
     title='User ID',
     description='The ID of the user in the database.',
-    example=1
+    example=18
 )
 
 
