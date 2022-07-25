@@ -219,7 +219,7 @@ def create_user(conn: Connection, user_data: dict):
         print(f'Error: {str(e)}')
         conn.rollback()
 
-    return cur.lastrowid
+    return user_data['uuid']
 
 
 def select_all_codes(conn: Connection):
