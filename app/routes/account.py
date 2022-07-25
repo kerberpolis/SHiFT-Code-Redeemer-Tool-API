@@ -1,23 +1,22 @@
 import logging
+import hashlib
 
 from fastapi import APIRouter, Request, Depends
 from fastapi.exceptions import HTTPException
 from app import database_controller
 from app.config import get_config, AppConfig
-<<<<<<< HEAD
-from app.models.schemas import GearboxFormData, UserFormData, ErrorResponse
+from app.models.schemas import GearboxFormData, UserFormData, ErrorResponse, User
 from app.models.queries import token_query
 from app.borderlands_crawler import BorderlandsCrawler
-from app.util import encrypt
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from passlib.pwd import genword
-import hashlib
-from app.util import generate_uuid
+from app.util import generate_uuid, encrypt, decrypt
 from app.errors import InvalidParameterError
+
 
 conf = ConnectionConfig(
     MAIL_USERNAME="danielhsutton",
-    MAIL_PASSWORD="pevngbfpftrhobsk",
+    MAIL_PASSWORD=get_config().GMAIL_APP_PW,
     MAIL_FROM="SHiFTCodeRedeemer@gmail.com",
     MAIL_PORT=587,
     MAIL_SERVER='smtp.gmail.com',
@@ -27,11 +26,7 @@ conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True
 )
-=======
-from app.models.schemas import GearboxFormData, UserFormData, ErrorResponse, RegisterFormData, User
-from app.borderlands_crawler import BorderlandsCrawler
-from app.util import encrypt, decrypt
->>>>>>> add endpoint to update user in PATCH request with optional data.
+
 
 db_conn = database_controller.create_connection()
 
@@ -157,7 +152,7 @@ async def confirm_email(request: Request, token: str = token_query):
                     database_controller.verify_user(db_conn, user['_id'])  # set user to be verified.
                     # remove any rows from user_confirmation taale with email (multiple verification emails sent)
                     database_controller.delete_user_confimation_by_email(db_conn,
-                                                                        user['email'])
+                                                                         user['email'])
                 except Exception:
                     raise Exception('Error verifying user.')
 
